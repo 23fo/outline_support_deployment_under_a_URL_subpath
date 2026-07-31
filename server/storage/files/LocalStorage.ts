@@ -44,10 +44,11 @@ export default class LocalStorage extends BaseStorage {
   }
 
   public getUploadUrl() {
-    return "/api/files.create";
+    return `${env.basePath}/api/files.create`;
   }
 
   public getUrlForKey(key: string): string {
+    // Application-relative, the base path is applied at the response boundary.
     return `/api/files.get?key=${key}`;
   }
 

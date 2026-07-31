@@ -10,6 +10,7 @@ import {
   DiagramsNetClient,
   EMPTY_DIAGRAM_IMAGE,
 } from "../lib/DiagramsNetClient";
+import { withBasePath } from "../../utils/subpath";
 import { sanitizeUrl } from "../../utils/urls";
 
 /**
@@ -138,8 +139,9 @@ export default class Diagrams extends Extension {
       // For empty diagram, send full data URI
       data = `data:image/svg+xml;base64,${EMPTY_DIAGRAM_IMAGE}`;
     } else {
-      // For existing diagrams, send the full data URI
-      data = await FileHelper.urlToBase64(sourceUrl);
+      // Persisted diagram URLs remain root-relative; resolve the runtime
+      // deployment path only when the browser fetches the source for editing.
+      data = await FileHelper.urlToBase64(withBasePath(sourceUrl));
     }
 
     // Detect format from the data URI now that we have the actual content.

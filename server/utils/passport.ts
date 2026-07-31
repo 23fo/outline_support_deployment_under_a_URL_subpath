@@ -9,6 +9,7 @@ import type { Primitive } from "utility-types";
 import { errToString, toError } from "@shared/utils/error";
 import { Client } from "@shared/types";
 import { getCookieDomain, parseDomain } from "@shared/utils/domains";
+import { getCookiePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import Logger from "@server/logging/Logger";
 import { Team, User } from "@server/models";
@@ -192,6 +193,7 @@ export class StateStore {
       secure: context.request.secure,
       expires: addMinutes(new Date(), 10),
       domain: getCookieDomain(context.hostname, env.isCloudHosted),
+      path: getCookiePath(env.basePath),
     });
 
     callback(null, state);
@@ -210,6 +212,7 @@ export class StateStore {
       secure: context.request.secure,
       expires: subMinutes(new Date(), 1),
       domain: getCookieDomain(context.hostname, env.isCloudHosted),
+      path: getCookiePath(env.basePath),
     });
 
     let state;

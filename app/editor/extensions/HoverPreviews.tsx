@@ -3,6 +3,7 @@ import { Plugin } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import Extension from "@shared/editor/lib/Extension";
 import parseDocumentSlug from "@shared/utils/parseDocumentSlug";
+import { withoutBasePath } from "@shared/utils/subpath";
 import stores from "~/stores";
 import HoverPreview from "~/components/HoverPreview";
 import env from "~/env";
@@ -63,12 +64,12 @@ export default class HoverPreviews extends Extension<HoverPreviewsOptions> {
                     const url =
                       element?.getAttribute("href") || element?.dataset.url;
                     const documentId = parseDocumentSlug(
-                      window.location.pathname
+                      withoutBasePath(window.location.pathname)
                     );
 
                     if (url) {
                       const transformedUrl = url.startsWith("/")
-                        ? env.URL + url
+                        ? new URL(url, env.URL).toString()
                         : url;
 
                       this.state.dataLoading = true;

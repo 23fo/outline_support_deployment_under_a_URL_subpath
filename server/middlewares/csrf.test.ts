@@ -7,7 +7,7 @@ import {
   clearCSRFCookie,
   generateRawToken,
 } from "@server/utils/csrf";
-import { attachCSRFToken } from "./csrf";
+import { attachCSRFToken, verifyCSRFToken } from "./csrf";
 
 async function getSetCookie(cookie?: string) {
   const app = new Koa();
@@ -68,6 +68,88 @@ describe("clearCSRFCookie", () => {
       const setCookie = res.headers.get("set-cookie") ?? "";
       expect(setCookie).toContain(`${CSRF.cookieName}=;`);
       expect(setCookie).toContain("expires=Thu, 01 Jan 1970");
+    } finally {
+      server.close();
+    }
+  });
+});
+
+describe("CSRF cookie selection", () => {
+  const originalUrl = env.URL;
+
+  afterEach(() => {
+    env.URL = originalUrl;
+  });
+
+  function createServer() {
+    const app = new Koa();
+    app.proxy = true;
+    app.use(attachCSRFToken());
+    app.use(verifyCSRFToken());
+    app.use((ctx) => {
+      ctx.status = 204;
+    });
+    return new TestServer(app);
+  }
+
+  it("uses a secure regular cookie scoped to the base path and accepts it", async () => {
+    env.URL = "https://example.com/apps/knowledge";
+    const server = createServer();
+
+    try {
+      const response = await server.get("/", {
+        headers: { "X-Forwarded-Proto": "https" },
+      });
+      const cookie = response.headers.get("set-cookie") ?? "";
+      expect(cookie).toContain(`${CSRF.cookieName}=`);
+      expect(cookie).not.toContain(`${CSRF.secureCookieName}=`);
+      expect(cookie).toMatch(/path=\/apps\/knowledge/i);
+      expect(cookie).toMatch(/secure/i);
+
+      const pair = cookie.split(";")[0];
+      const mutation = await server.post("/mutate", {
+        headers: {
+          "X-Forwarded-Proto": "https",
+          Cookie: `accessToken=test; ${pair}`,
+          [CSRF.headerName]: pair.slice(CSRF.cookieName.length + 1),
+        },
+      });
+      expect(mutation.status).toBe(204);
+    } finally {
+      server.close();
+    }
+  });
+
+  it("retains the host-bound cookie for secure root deployments", async () => {
+    env.URL = "https://example.com";
+    const server = createServer();
+
+    try {
+      const response = await server.get("/", {
+        headers: { "X-Forwarded-Proto": "https" },
+      });
+      const cookie = response.headers.get("set-cookie") ?? "";
+      expect(cookie).toContain(`${CSRF.secureCookieName}=`);
+      expect(cookie).toMatch(/path=\//i);
+    } finally {
+      server.close();
+    }
+  });
+
+  it("expires the cookie at the base path", async () => {
+    env.URL = "https://example.com/apps/knowledge";
+    const app = new Koa();
+    app.use((ctx) => {
+      clearCSRFCookie(ctx);
+      ctx.body = "ok";
+    });
+
+    const server = new TestServer(app);
+    try {
+      const response = await server.get("/");
+      expect(response.headers.get("set-cookie") ?? "").toMatch(
+        /path=\/apps\/knowledge/i
+      );
     } finally {
       server.close();
     }

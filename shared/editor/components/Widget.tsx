@@ -1,7 +1,7 @@
 import * as React from "react";
 import styled, { css } from "styled-components";
 import { s } from "../../styles";
-import { sanitizeUrl } from "../../utils/urls";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 import Flex from "../../components/Flex";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 
@@ -35,7 +35,7 @@ export default function Widget(props: Props) {
     <Wrapper
       className={className}
       target="_blank"
-      href={sanitizeUrl(props.href)}
+      href={sanitizeResourceUrl(props.href)}
       rel="noreferrer nofollow"
       onDoubleClick={props.onDoubleClick}
       onMouseDown={props.onMouseDown}

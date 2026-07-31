@@ -381,6 +381,10 @@ export class DocumentHelper {
        * (default: false)
        */
       commonMark?: boolean;
+      /** The base URL to use for document and collection links */
+      internalUrlBase?: string;
+      /** The base URL to use for other application-relative URLs */
+      applicationUrlBase?: string;
     }
   ) {
     let node = DocumentHelper.toProsemirror(document);
@@ -390,6 +394,15 @@ export class DocumentHelper {
         node,
         options.teamId,
         options.signedUrls
+      );
+      node = Node.fromJSON(schema, data);
+    }
+
+    if (options?.internalUrlBase || options?.applicationUrlBase) {
+      const data = ProsemirrorHelper.replaceInternalUrls(
+        node,
+        options.internalUrlBase,
+        options.applicationUrlBase
       );
       node = Node.fromJSON(schema, data);
     }

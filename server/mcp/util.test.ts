@@ -1,4 +1,6 @@
 import { CollectionPermission, type NavigationNode } from "@shared/types";
+import env from "@server/env";
+import { Team } from "@server/models";
 import {
   buildCollection,
   buildDocument,
@@ -9,6 +11,7 @@ import {
   buildBreadcrumb,
   getBreadcrumbsForDocuments,
   optionalString,
+  pathToUrl,
   success,
 } from "./util";
 
@@ -107,6 +110,32 @@ describe("optionalString", () => {
 
   it("preserves whitespace-only strings", () => {
     expect(schema.parse(" ")).toBe(" ");
+  });
+});
+
+describe("pathToUrl", () => {
+  const originalUrl = env.URL;
+
+  afterEach(() => {
+    env.URL = originalUrl;
+  });
+
+  it("resolves presented application paths beneath the team subpath", () => {
+    env.URL = "https://app.example.com/apps/knowledge";
+    const team = Team.build({});
+    const externalUrl = "https://cdn.example.com/file.png";
+
+    expect(
+      pathToUrl(team, {
+        url: "/doc/test",
+        path: "/api/attachments.redirect?id=attachment",
+        externalUrl,
+      })
+    ).toEqual({
+      url: "https://app.example.com/apps/knowledge/doc/test",
+      path: "https://app.example.com/apps/knowledge/api/attachments.redirect?id=attachment",
+      externalUrl,
+    });
   });
 });
 

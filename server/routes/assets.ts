@@ -50,7 +50,7 @@ if (env.isProduction) {
         maxAge: Day.ms * 365,
         immutable: true,
         setHeaders: (res, filePath) => {
-          res.setHeader("Service-Worker-Allowed", "/");
+          res.setHeader("Service-Worker-Allowed", `${env.basePath}/`);
           res.setHeader("Access-Control-Allow-Origin", "*");
 
           // The service worker is not hashed and must always be revalidated

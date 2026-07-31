@@ -1,6 +1,8 @@
 import querystring from "node:querystring";
 import type { Next } from "koa";
 import { Pagination } from "@shared/constants";
+import { withBasePath } from "@shared/utils/subpath";
+import env from "@server/env";
 import { InvalidRequestError } from "@server/errors";
 import type { AppContext, Pagination as PaginationType } from "@server/types";
 import { RequestHelper } from "@server/utils/RequestHelper";
@@ -122,7 +124,10 @@ export default function pagination({
     ctx.state.pagination = {
       limit,
       offset,
-      nextPath: `/api${ctx.request.path}?${querystring.stringify(query)}`,
+      nextPath: withBasePath(
+        `/api${ctx.request.path}?${querystring.stringify(query)}`,
+        env.basePath
+      ),
     };
 
     return next();

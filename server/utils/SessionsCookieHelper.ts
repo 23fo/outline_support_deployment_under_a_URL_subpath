@@ -7,6 +7,7 @@ import {
   getSessionsCookieExpiry,
   parseSessionsCookie,
 } from "@shared/utils/sessions";
+import { getCookiePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import { Team } from "@server/models";
 
@@ -59,7 +60,7 @@ export class SessionsCookieHelper {
 
     ctx.cookies.set("sessions", value, {
       domain: getCookieDomain(ctx.request.hostname, env.isCloudHosted),
-      path: "/",
+      path: getCookiePath(env.basePath),
       httpOnly: false,
       expires,
     });

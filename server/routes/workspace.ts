@@ -1,6 +1,7 @@
 import type { Context } from "koa";
 import { TeamPreference } from "@shared/types";
 import { parseDomain } from "@shared/utils/domains";
+import { withBasePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import { Integration, type Team } from "@server/models";
 import { getSessionRedirectUrl } from "@server/utils/authentication";
@@ -30,7 +31,7 @@ export async function getWorkspaceRedirectUrl(
     }
 
     const url = new URL(team.url);
-    url.pathname = ctx.path;
+    url.pathname = withBasePath(ctx.path, env.basePath);
     url.search = ctx.search;
     return url.toString();
   }

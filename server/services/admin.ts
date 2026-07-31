@@ -2,6 +2,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { KoaAdapter } from "@bull-board/koa";
 import type Koa from "koa";
+import env from "@server/env";
 import {
   globalEventQueue,
   processorEventQueue,
@@ -20,6 +21,6 @@ export default function init(app: Koa) {
     ],
     serverAdapter,
   });
-  serverAdapter.setBasePath("/admin");
+  serverAdapter.setBasePath(`${env.basePath}/admin`);
   app.use(serverAdapter.registerPlugin());
 }

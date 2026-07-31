@@ -1,7 +1,18 @@
 import sharedEnv from "../env";
 import parseCollectionSlug from "./parseCollectionSlug";
 
-sharedEnv.URL = "https://app.outline.dev";
+const originalBasePath = sharedEnv.BASE_PATH;
+const originalUrl = sharedEnv.URL;
+
+beforeEach(() => {
+  sharedEnv.BASE_PATH = "";
+  sharedEnv.URL = "https://app.outline.dev";
+});
+
+afterAll(() => {
+  sharedEnv.BASE_PATH = originalBasePath;
+  sharedEnv.URL = originalUrl;
+});
 
 describe("#parseCollectionSlug", () => {
   it("should work with fully qualified url", () => {
@@ -44,5 +55,17 @@ describe("#parseCollectionSlug", () => {
     expect(parseCollectionSlug("/collection/test-ANzZwgv2RG#somehash")).toEqual(
       "test-ANzZwgv2RG"
     );
+  });
+
+  it("removes a base path containing a collection route segment", () => {
+    sharedEnv.BASE_PATH = "/collection/outline";
+    sharedEnv.URL = "https://app.outline.dev/collection/outline";
+
+    expect(
+      parseCollectionSlug(
+        "https://app.outline.dev/collection/outline/collection/title-collectionId"
+      )
+    ).toEqual("title-collectionId");
+    expect(parseCollectionSlug("/collection/outline")).toEqual("outline");
   });
 });

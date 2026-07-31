@@ -3,6 +3,7 @@ import { addMonths } from "date-fns";
 import Koa from "koa";
 import bodyParser from "koa-body";
 import Router from "@koa/router";
+import env from "@server/env";
 import { AuthenticationError } from "@server/errors";
 import authMiddleware from "@server/middlewares/authentication";
 import coalesceBody from "@server/middlewares/coaleseBody";
@@ -11,6 +12,7 @@ import AuthenticationHelper from "@server/models/helpers/AuthenticationHelper";
 import type { AppState, AppContext } from "@server/types";
 import { verifyCSRFToken } from "@server/middlewares/csrf";
 import { clearCSRFCookie } from "@server/utils/csrf";
+import { getCookiePath } from "@shared/utils/subpath";
 import { getUserForJWT } from "@server/utils/jwt";
 
 const app = new Koa<AppState, AppContext>();
@@ -53,6 +55,7 @@ router.get("/redirect", async (ctx: AppContext) => {
   ctx.cookies.set("accessToken", jwtToken, {
     sameSite: "lax",
     expires,
+    path: getCookiePath(env.basePath),
   });
   clearCSRFCookie(ctx);
   const [team, collection, view] = await Promise.all([

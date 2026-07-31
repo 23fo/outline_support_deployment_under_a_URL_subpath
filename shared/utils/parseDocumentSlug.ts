@@ -1,4 +1,4 @@
-import sharedEnv from "../env";
+import { getAppPathname } from "./subpath";
 
 /**
  * Parse the likely document identifier from a given url.
@@ -7,19 +7,11 @@ import sharedEnv from "../env";
  * @returns A document identifier or undefined if not found.
  */
 export default function parseDocumentSlug(url: string) {
-  let parsed;
-
-  if (url[0] === "/") {
-    url = `${sharedEnv.URL}${url}`;
-  }
-
-  try {
-    parsed = new URL(url).pathname;
-  } catch (_err) {
+  const split = getAppPathname(url)?.split("/");
+  if (!split) {
     return;
   }
 
-  const split = parsed.split("/");
   const indexOfDoc = split.indexOf("doc");
   return split[indexOfDoc + 1] ?? undefined;
 }

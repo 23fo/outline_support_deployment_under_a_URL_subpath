@@ -132,16 +132,19 @@ export class OAuthHelper {
   }
 
   /**
-   * Returns the origin that identifies this deployment as an OAuth issuer and
-   * resource server. Cloud-hosted deployments use the request origin so each
+   * Returns the URL that identifies this deployment as an OAuth issuer and
+   * resource server, including the application base path. Cloud-hosted deployments use the request origin so each
    * team subdomain is its own issuer; self-hosted deployments use the
    * configured URL so a reverse proxy that strips the port does not change it.
    *
    * @param ctx - the Koa request context.
-   * @returns the origin, e.g. "https://app.getoutline.com".
+   * @returns the issuer URL, e.g. "https://app.getoutline.com".
    */
   public static getIssuer(ctx: Context): string {
-    return env.isCloudHosted ? ctx.request.URL.origin : new URL(env.URL).origin;
+    const origin = env.isCloudHosted
+      ? ctx.request.URL.origin
+      : new URL(env.URL).origin;
+    return `${origin}${env.basePath}`;
   }
 
   /**
@@ -149,10 +152,12 @@ export class OAuthHelper {
    * pointing clients at the protected resource metadata document and the
    * scopes required to use the resource (RFC 6750 §3, RFC 9728 §5.1).
    *
-   * @param issuer - the origin of this deployment.
+   * @param issuer - the issuer URL of this deployment.
    * @returns the header value for a Bearer challenge.
    */
   public static mcpBearerChallenge(issuer: string): string {
-    return `Bearer resource_metadata="${issuer}/.well-known/oauth-protected-resource/mcp", scope="${OAuthHelper.mcpScopes.join(" ")}"`;
+    const { origin, pathname } = new URL(issuer);
+    const issuerPath = pathname.replace(/\/$/, "");
+    return `Bearer resource_metadata="${origin}/.well-known/oauth-protected-resource${issuerPath}/mcp", scope="${OAuthHelper.mcpScopes.join(" ")}"`;
   }
 }

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { TeamValidation } from "@shared/validations";
 import { Team } from "@server/models";
+import env from "@server/env";
 import {
   buildTeam,
   buildCollection,
@@ -8,7 +9,45 @@ import {
   buildSubdomain,
 } from "@server/test/factories";
 
+const originalUrl = env.URL;
+
+afterEach(() => {
+  env.URL = originalUrl;
+});
+
 describe("Team", () => {
+  describe("url", () => {
+    it("preserves the application subpath for custom domains", async () => {
+      env.URL = "https://app.example.com:3000/outline";
+      const domain = `${randomUUID()}.example.com`;
+      const team = await buildTeam({ domain });
+
+      expect(team.url).toBe(`https://${domain}:3000/outline`);
+    });
+
+    it("leaves root deployments unchanged for custom domains", async () => {
+      env.URL = "https://app.example.com";
+      const domain = `${randomUUID()}.example.com`;
+      const team = await buildTeam({ domain });
+
+      expect(team.url).toBe(`https://${domain}`);
+    });
+  });
+
+  describe("isTeamUrl", () => {
+    it("requires the URL to be inside the application base path", () => {
+      env.URL = "https://app.example.com:3000/apps/knowledge";
+      const team = Team.build({});
+      const origin = new URL(team.url).origin;
+
+      expect(team.isTeamUrl(`${team.url}/doc/test`)).toBe(true);
+      expect(team.isTeamUrl(`${origin}/grafana`)).toBe(false);
+      expect(team.isTeamUrl(`${origin}/apps/knowledge-base/doc/test`)).toBe(
+        false
+      );
+    });
+  });
+
   describe("findByDomain", () => {
     it("should find a team by its domain", async () => {
       const domain = `${randomUUID()}.example.com`;

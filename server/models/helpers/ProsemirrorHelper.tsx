@@ -45,6 +45,7 @@ import {
 import parseDocumentSlug from "@shared/utils/parseDocumentSlug";
 import { isRTL } from "@shared/utils/rtl";
 import { UrlHelper } from "@shared/utils/UrlHelper";
+import { withoutBasePath } from "@shared/utils/subpath";
 import { isInternalUrl } from "@shared/utils/urls";
 import attachmentCreator from "@server/commands/attachmentCreator";
 import { plugins, schema, parser } from "@server/editor";
@@ -352,8 +353,12 @@ export class ProsemirrorHelper extends SharedProsemirrorHelper {
           if (url.protocol !== "http:" && url.protocol !== "https:") {
             return href;
           }
-          origin = url.origin;
-          path = `${url.pathname}${url.search}${url.hash}`;
+          const pathname = withoutBasePath(url.pathname, env.basePath);
+          origin =
+            pathname === url.pathname
+              ? url.origin
+              : `${url.origin}${env.basePath}`;
+          path = `${pathname}${url.search}${url.hash}`;
         } catch (_err) {
           return href;
         }
@@ -408,28 +413,37 @@ export class ProsemirrorHelper extends SharedProsemirrorHelper {
   }
 
   /**
-   * Prefixes internal document and collection links with the given base path.
+   * Resolves application-relative URLs in a ProseMirror document for output.
    *
-   * @param doc The prosemirror document or JSON data.
-   * @param basePath The base path to prefix internal links with, without a
-   * trailing slash.
-   * @returns The document data with internal links rewritten.
-   * @throws If the base path ends with a slash.
+   * @param doc the document containing URLs to resolve.
+   * @param internalUrlBase the base URL for document and collection links.
+   * @param applicationUrlBase the base URL for other root-relative URLs.
+   * @returns the document with application-relative URLs resolved.
+   * @throws If a base URL ends with a slash.
    */
   static replaceInternalUrls(
     doc: Node | ProsemirrorData,
-    basePath: string
+    internalUrlBase?: string,
+    applicationUrlBase?: string
   ): ProsemirrorData {
     const json = "toJSON" in doc ? (doc.toJSON() as ProsemirrorData) : doc;
 
-    if (basePath.endsWith("/")) {
+    if (internalUrlBase?.endsWith("/")) {
       throw new Error("internalUrlBase must not end with a slash");
+    }
+    if (applicationUrlBase?.endsWith("/")) {
+      throw new Error("applicationUrlBase must not end with a slash");
     }
 
     function replaceUrl(url: string) {
-      // Only replace if the URL starts with /doc/ (or) /collection/ (not already in a share path)
-      if (url.startsWith("/doc/") || url.startsWith("/collection/")) {
-        return `${basePath}${url}`;
+      if (
+        internalUrlBase &&
+        (url.startsWith("/doc/") || url.startsWith("/collection/"))
+      ) {
+        return `${internalUrlBase}${url}`;
+      }
+      if (applicationUrlBase && url.startsWith("/") && !url.startsWith("//")) {
+        return `${applicationUrlBase}${url}`;
       }
       return url;
     }
@@ -438,12 +452,13 @@ export class ProsemirrorHelper extends SharedProsemirrorHelper {
       // Node.toJSON shares attrs with the node, so replace them rather than mutate.
       if (typeof node.attrs?.href === "string") {
         node.attrs = { ...node.attrs, href: replaceUrl(node.attrs.href) };
-      } else if (node.marks) {
+      }
+      if (typeof node.attrs?.src === "string") {
+        node.attrs = { ...node.attrs, src: replaceUrl(node.attrs.src) };
+      }
+      if (node.marks) {
         node.marks.forEach((mark) => {
-          if (
-            typeof mark.attrs?.href === "string" &&
-            isInternalUrl(mark.attrs?.href)
-          ) {
+          if (typeof mark.attrs?.href === "string") {
             mark.attrs = { ...mark.attrs, href: replaceUrl(mark.attrs.href) };
           }
         });

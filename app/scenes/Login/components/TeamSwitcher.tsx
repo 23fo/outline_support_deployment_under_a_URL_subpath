@@ -15,6 +15,7 @@ import OutlineIcon from "~/components/Icons/OutlineIcon";
 import env from "~/env";
 import { detectLanguage } from "~/utils/language";
 import Login from "../Login";
+import { teamSwitcherUrl } from "../urls";
 import { Background } from "./Background";
 import { Centered } from "./Centered";
 
@@ -35,7 +36,6 @@ interface Props {
 export function TeamSwitcher({ sessions, description }: Props) {
   const { t } = useTranslation();
   const [showLogin, setShowLogin] = useState(false);
-  const { pathname, search } = window.location;
 
   if (showLogin) {
     return <Login onBack={() => setShowLogin(false)} />;
@@ -57,7 +57,9 @@ export function TeamSwitcher({ sessions, description }: Props) {
         </Text>
         {Object.keys(sessions).map((teamId) => {
           const session = sessions[teamId];
-          const location = sanitizeUrl(session.url + pathname + search);
+          const location = sanitizeUrl(
+            teamSwitcherUrl(session.url, window.location.href)
+          );
           return (
             <TeamLink href={location} key={teamId}>
               <Avatar

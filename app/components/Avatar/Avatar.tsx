@@ -1,6 +1,7 @@
 import { observer } from "mobx-react";
 import * as React from "react";
 import styled from "styled-components";
+import { resolveResourceUrl } from "@shared/utils/resourceUrl";
 import useBoolean from "~/hooks/useBoolean";
 import Initials from "./Initials";
 import Tooltip from "../Tooltip";
@@ -71,7 +72,7 @@ function Avatar(props: AvatarProps) {
     onClick,
     ...rest
   } = props;
-  const src = srcProp || model?.avatarUrl;
+  const src = resolveResourceUrl(srcProp || model?.avatarUrl);
   const [error, handleError] = useBoolean(false);
   const initial =
     model?.initial || (model?.name ? model.name[0] : "").toUpperCase();

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { getCookie, removeCookie, setCookie } from "tiny-cookie";
+import { getCookiePath } from "@shared/utils/subpath";
 import usePersistedState, {
   setPersistedState,
 } from "~/hooks/usePersistedState";
@@ -53,7 +54,8 @@ export function useTrackLastVisitedPath(currentPath: string): void {
 }
 
 /**
- * Sets the path that the user visited before being asked to login.
+ * Sets the application-relative path that the user visited before being asked
+ * to login.
  *
  * @param path The path to set as the post login path.
  * @param options.tabOnly Whether to store the path for the current tab only, rather than
@@ -67,7 +69,7 @@ export function setPostLoginPath(
 
   if (isAllowedLoginRedirect(path)) {
     if (!options.tabOnly) {
-      setCookie(key, path, { expires: 1 });
+      setCookie(key, path, { expires: 1, path: getCookiePath() });
     }
 
     try {
@@ -106,7 +108,7 @@ export function usePostLoginPath() {
         } catch (_err) {
           // Expected error if the session storage is full or inaccessible.
         }
-        removeCookie(key);
+        removeCookie(key, { path: getCookiePath() });
         cleanup?.();
       });
 

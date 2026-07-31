@@ -6,6 +6,7 @@ import type {
 } from "history";
 import { createBrowserHistory, createPath, parsePath } from "history";
 import { isMobile } from "@shared/utils/browser";
+import env from "~/env";
 import {
   getFocusedSplitPane,
   getSplitPath,
@@ -53,7 +54,9 @@ export function toLocationDescriptor(
   return to;
 }
 
-const history = createBrowserHistory();
+const history = createBrowserHistory({
+  basename: env.BASE_PATH || undefined,
+});
 
 /**
  * Applies split view handling to a navigation. While a split view is open:

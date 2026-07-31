@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import type { Optional } from "utility-types";
 import { s } from "../../styles";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 import { sanitizeUrl } from "../../utils/urls";
 
 type Props = Omit<
@@ -84,7 +85,7 @@ const Frame = ({
           frameBorder="0"
           title="embed"
           loading="lazy"
-          src={sanitizeUrl(src)}
+          src={sanitizeResourceUrl(src)}
           referrerPolicy={referrerPolicy}
           allowFullScreen
           {...rest}

@@ -1,4 +1,5 @@
 import useShare from "@shared/hooks/useShare";
+import { withBasePath } from "@shared/utils/subpath";
 
 type Props = React.ImgHTMLAttributes<HTMLImageElement> & {
   value: string;
@@ -14,7 +15,7 @@ export const CustomEmoji = ({
   ...props
 }: Props) => {
   const { shareId } = useShare();
-  let src = `/api/emojis.redirect?id=${value}`;
+  let src = withBasePath(`/api/emojis.redirect?id=${value}`);
   if (shareId) {
     src += `&shareId=${shareId}`;
   }

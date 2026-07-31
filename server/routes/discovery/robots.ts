@@ -3,9 +3,11 @@
  * sitemap, and attachment redirects; per-page indexing is controlled by the
  * robots meta tag.
  *
+ * @param basePath the application base path to prefix each rule with.
  * @returns the robots.txt content.
  */
-export const robotsResponse = (): string => `
+export const robotsResponse = (basePath = ""): string =>
+  `
 User-agent: *
 Allow: /api/shares.sitemap
 Allow: /api/attachments.redirect
@@ -28,4 +30,4 @@ Disallow: /dashboard
 Disallow: /create
 Disallow: /logout
 Disallow: /desktop-redirect
-`;
+`.replace(/^(Allow|Disallow): /gm, `$1: ${basePath}`);
