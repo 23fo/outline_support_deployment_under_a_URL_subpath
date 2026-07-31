@@ -13,6 +13,7 @@ import env from "~/env";
 import type { Sessions } from "~/hooks/useLoggedInSessions";
 import { detectLanguage } from "~/utils/language";
 import Login from "../Login";
+import { teamSwitcherUrl } from "../urls";
 import { Background } from "./Background";
 import { Centered } from "./Centered";
 
@@ -21,7 +22,6 @@ type Props = { sessions: Sessions };
 export function TeamSwitcher({ sessions }: Props) {
   const { t } = useTranslation();
   const [showLogin, setShowLogin] = useState(false);
-  const url = new URL(window.location.href);
   const appName = env.APP_NAME;
 
   if (showLogin) {
@@ -44,7 +44,7 @@ export function TeamSwitcher({ sessions }: Props) {
         </Text>
         {Object.keys(sessions)?.map((teamId) => {
           const session = sessions[teamId];
-          const location = session.url + url.pathname + url.search;
+          const location = teamSwitcherUrl(session.url, window.location.href);
           return (
             <TeamLink href={location} key={session.url}>
               <Avatar

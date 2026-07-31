@@ -18,6 +18,7 @@ import type { User } from "@server/models";
 import { AuthenticationProvider } from "@server/models";
 import type { AuthenticationResult } from "@server/types";
 import { LogoutTokenStore } from "@server/utils/LogoutTokenStore";
+import { clearAccessTokenCookie } from "@server/utils/authentication";
 import {
   StateStore,
   getTeamFromContext,
@@ -267,6 +268,7 @@ export function createOIDCRouter(
   // while `post_logout_redirect_uri` returns the user to Outline afterwards.
   // https://openid.net/specs/openid-connect-rpinitiated-1_0.html
   router.get(`${config.id}.logout`, async (ctx: Context) => {
+    clearAccessTokenCookie(ctx);
     const idToken = await logoutTokens.consume(ctx);
 
     if (!endpoints.logoutURL) {

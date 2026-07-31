@@ -4,6 +4,7 @@ import type { Context } from "koa";
 import { errToString } from "@shared/utils/error";
 import { randomString } from "@shared/random";
 import { getCookieDomain } from "@shared/utils/domains";
+import { getCookiePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import Logger from "@server/logging/Logger";
 import {
@@ -34,6 +35,7 @@ export function generateOAuthStateNonce(
     sameSite: "lax",
     expires: addMinutes(new Date(), 10),
     domain: getCookieDomain(ctx.hostname, env.isCloudHosted),
+    path: getCookiePath(env.basePath),
   });
   return nonce;
 }
@@ -61,6 +63,7 @@ export function verifyOAuthStateNonce(
     sameSite: "lax",
     expires: subMinutes(new Date(), 1),
     domain: getCookieDomain(ctx.hostname, env.isCloudHosted),
+    path: getCookiePath(env.basePath),
   });
 
   if (!safeEqual(cookieNonce, stateNonce)) {

@@ -15,6 +15,7 @@ import Logger from "@server/logging/Logger";
 import Metrics from "@server/logging/Metrics";
 import csp from "@server/middlewares/csp";
 import { attachCSRFToken } from "@server/middlewares/csrf";
+import subpathRedirect from "@server/middlewares/subpathRedirect";
 import ShutdownHelper, { ShutdownOrder } from "@server/utils/ShutdownHelper";
 import { initI18n } from "@server/utils/i18n";
 import routes from "../routes";
@@ -22,6 +23,7 @@ import api from "../routes/api";
 import auth from "../routes/auth";
 import mcp from "../routes/mcp";
 import oauth from "../routes/oauth";
+import { createWellKnownApp } from "../routes/wellKnown";
 import type { UserAgentContext } from "koa-useragent";
 import userAgent from "koa-useragent";
 
@@ -80,31 +82,42 @@ export default function init(app: Koa = new Koa(), server?: Server) {
     Metrics.gaugePerInstance("connections.count", 0);
   });
 
-  app.use(mount("/api", api));
-  app.use(mount("/mcp", mcp));
+  const basePath = env.basePath;
+  const routedApp = new Koa();
+
+  // Koa routes are defined relative to their mounted application. Normalize
+  // root-relative redirects once at the web boundary.
+  if (basePath) {
+    app.use(subpathRedirect(basePath));
+  }
+
+  app.use(mount(createWellKnownApp(basePath)));
+  routedApp.use(mount("/api", api));
+  routedApp.use(mount("/mcp", mcp));
 
   // Generate and attach a CSRF token to the session on non-API requests
-  app.use(attachCSRFToken());
+  routedApp.use(attachCSRFToken());
 
   // Apply CSP middleware after API as these responses are rendered in the browser
-  app.use(csp());
+  routedApp.use(csp());
 
   // Allow DNS prefetching for performance, we do not care about leaking requests
   // to our own CDN's
-  app.use(
+  routedApp.use(
     dnsPrefetchControl({
       allow: true,
     })
   );
-  app.use(
+  routedApp.use(
     referrerPolicy({
       policy: "no-referrer",
     })
   );
 
-  app.use(mount("/auth", auth));
-  app.use(mount("/oauth", oauth));
-  app.use(mount(routes));
+  routedApp.use(mount("/auth", auth));
+  routedApp.use(mount("/oauth", oauth));
+  routedApp.use(mount(routes));
+  app.use(mount(basePath || "/", routedApp));
 
   return app;
 }

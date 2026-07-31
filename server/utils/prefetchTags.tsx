@@ -31,6 +31,9 @@ if (env.CDN_URL) {
   );
 }
 
+// Use the CDN when configured, otherwise the app's runtime base path.
+const assetBase = env.CDN_URL || env.basePath;
+
 if (env.isProduction) {
   const manifest = readManifestFile();
 
@@ -58,7 +61,7 @@ if (env.isProduction) {
       prefetchTags.push(
         <link
           rel="prefetch"
-          href={`${env.CDN_URL || ""}/static/${file}`}
+          href={`${assetBase}/static/${file}`}
           key={file}
           as="script"
           crossOrigin="anonymous"
@@ -68,7 +71,7 @@ if (env.isProduction) {
       prefetchTags.push(
         <link
           rel="prefetch"
-          href={`${env.CDN_URL || ""}/static/${file}`}
+          href={`${assetBase}/static/${file}`}
           key={file}
           as="style"
           crossOrigin="anonymous"

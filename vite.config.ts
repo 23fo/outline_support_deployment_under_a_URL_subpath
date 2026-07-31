@@ -29,7 +29,7 @@ export default () =>
   defineConfig({
     root: "./",
     publicDir: "./server/static",
-    base: (environment.CDN_URL ?? "") + "/static/",
+    base: environment.NODE_ENV === "production" ? "./" : "/static/",
     server: {
       port: 3001,
       host: true,
@@ -54,9 +54,11 @@ export default () =>
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ["**/*.{js,css,ico,png,svg}"],
           navigateFallback: null,
-          modifyURLPrefix: {
-            "": `${environment.CDN_URL ?? ""}/static/`,
-          },
+          // With a CDN, precache from its absolute URL. Otherwise keep entries
+          // relative to <base-path>/static/sw.js so runtime sub-paths work.
+          ...(environment.CDN_URL && {
+            modifyURLPrefix: { "": `${environment.CDN_URL}/static/` },
+          }),
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
@@ -97,8 +99,9 @@ export default () =>
           short_name: "Outline",
           theme_color: "#fff",
           background_color: "#fff",
-          start_url: "/",
-          scope: ".",
+          // Relative to <base-path>/static/manifest.webmanifest.
+          start_url: "../",
+          scope: "../",
           display: "standalone",
           // For Chrome, you must provide at least a 192x192 pixel icon, and a 512x512 pixel icon.
           // If only those two icon sizes are provided, Chrome will automatically scale the icons
@@ -106,41 +109,41 @@ export default () =>
           // pixel-perfection, provide icons in increments of 48dp.
           icons: [
             {
-              src: "/images/icon-192.png",
+              src: "../images/icon-192.png",
               sizes: "192x192",
               type: "image/png",
             },
             {
-              src: "/images/icon-512.png",
+              src: "../images/icon-512.png",
               sizes: "512x512",
               type: "image/png",
             },
             {
-              src: "/images/icon-maskable-192.png",
+              src: "../images/icon-maskable-192.png",
               sizes: "192x192",
               type: "image/png",
               purpose: "maskable",
             },
             {
-              src: "/images/icon-maskable-512.png",
+              src: "../images/icon-maskable-512.png",
               sizes: "512x512",
               type: "image/png",
               purpose: "maskable",
             },
             {
-              src: "/images/icon-maskable-1024.png",
+              src: "../images/icon-maskable-1024.png",
               sizes: "1024x1024",
               type: "image/png",
               purpose: "maskable",
             },
             {
-              src: "/images/icon-monochrome-512.png",
+              src: "../images/icon-monochrome-512.png",
               sizes: "512x512",
               type: "image/png",
               purpose: "monochrome",
             },
             {
-              src: "/images/icon-monochrome-1024.png",
+              src: "../images/icon-monochrome-1024.png",
               sizes: "1024x1024",
               type: "image/png",
               purpose: "monochrome",

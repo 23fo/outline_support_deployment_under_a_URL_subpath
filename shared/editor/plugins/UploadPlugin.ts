@@ -7,6 +7,7 @@ import {
   getDataTransferImage,
   dataUrlToFile,
 } from "../../utils/files";
+import { withBasePath } from "../../utils/subpath";
 import { fileNameFromUrl, isInternalUrl } from "../../utils/urls";
 import type { Options } from "../commands/insertFiles";
 import insertFiles from "../commands/insertFiles";
@@ -272,7 +273,9 @@ export class UploadPlugin extends Plugin {
                 }
 
                 if (url) {
-                  const file = await FileHelper.getFileForUrl(url);
+                  const file = await FileHelper.getFileForUrl(
+                    withBasePath(url)
+                  );
                   const dimensions = await FileHelper.getImageDimensions(file);
                   const result = findPlaceholder(view.state, upload.id);
 

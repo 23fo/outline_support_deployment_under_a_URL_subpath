@@ -6,6 +6,7 @@ import type { ComponentProps } from "../types";
 import { isFirefox } from "../../utils/browser";
 import Flex from "../../components/Flex";
 import { s } from "../../styles";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 import { Preview, Subtitle, Title } from "./Widget";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 
@@ -30,6 +31,7 @@ type Props = ComponentProps & {
 export default function PdfViewer(props: Props) {
   const { node, isEditable, onChangeSize, isSelected } = props;
   const { href, name } = node.attrs;
+  const src = sanitizeResourceUrl(href);
   const ref = useRef<HTMLDivElement>(null);
   const embedRef = useRef<HTMLEmbedElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,7 +67,7 @@ export default function PdfViewer(props: Props) {
           embedRef.current.src = "";
           requestAnimationFrame(() => {
             if (embedRef.current) {
-              embedRef.current.src = href;
+              embedRef.current.src = src ?? "";
             }
           });
         }
@@ -80,7 +82,7 @@ export default function PdfViewer(props: Props) {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [dragging, href]);
+  }, [dragging, src]);
 
   return (
     <PDFWrapper
@@ -103,7 +105,7 @@ export default function PdfViewer(props: Props) {
       </Flex>
       <embed
         title={name}
-        src={href}
+        src={src}
         ref={embedRef}
         style={{
           width: "100%",

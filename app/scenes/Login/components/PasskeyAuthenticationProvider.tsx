@@ -8,6 +8,7 @@ import { Client } from "@shared/types";
 import { errToString } from "@shared/utils/error";
 import ButtonLarge from "~/components/ButtonLarge";
 import PluginIcon from "~/components/PluginIcon";
+import env from "~/env";
 import useQuery from "~/hooks/useQuery";
 import { client } from "~/utils/ApiClient";
 import Desktop from "~/utils/Desktop";
@@ -135,7 +136,9 @@ export function PasskeyAuthenticationProvider(props: Props) {
     // platform authenticator support. Open the flow in the system browser,
     // which returns to the app via the outline:// deep link like SSO login.
     if (Desktop.isElectron()) {
-      window.location.href = `/auth/passkey?client=${Client.Desktop}`;
+      window.location.href = `${env.BASE_PATH}/auth/passkey?client=${
+        Client.Desktop
+      }`;
       return;
     }
 
@@ -147,7 +150,7 @@ export function PasskeyAuthenticationProvider(props: Props) {
       <Form
         ref={formRef}
         method="POST"
-        action="/auth/passkeys.verifyAuthentication"
+        action={`${env.BASE_PATH}/auth/passkeys.verifyAuthentication`}
         onSubmit={handleSubmit}
       >
         {fields &&

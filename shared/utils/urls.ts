@@ -2,15 +2,21 @@ import { escapeRegExp } from "es-toolkit/compat";
 import env from "../env";
 import { isBrowser } from "./browser";
 import { parseDomain } from "./domains";
+import {
+  getAppPathname,
+  getBasePath,
+  isPathInBasePath,
+  withBasePath,
+} from "./subpath";
 
 /**
- * Prepends the CDN url to the given path (If a CDN is configured).
+ * Prepends the CDN url or application base path to the given path.
  *
- * @param path The path to prepend the CDN url to.
- * @returns The path with the CDN url prepended.
+ * @param path The path to prepend to.
+ * @returns The path with the asset base prepended.
  */
 export function cdnPath(path: string): string {
-  return `${env.CDN_URL ?? ""}${path}`;
+  return `${env.CDN_URL || getBasePath()}${path}`;
 }
 
 /**
@@ -31,7 +37,7 @@ export function fileNameFromUrl(url: string) {
 /**
  * Returns true if the given string is a link to inside the application.
  *
- * @param url The url to check.
+ * @param href The url to check.
  * @returns True if the url is internal, false otherwise.
  */
 export function isInternalUrl(href: string) {
@@ -40,22 +46,22 @@ export function isInternalUrl(href: string) {
     return false;
   }
 
-  // relative paths are always internal
-  if (href[0] === "/") {
+  // root-relative paths are always internal
+  if (href.startsWith("/") && !href.startsWith("//")) {
     return true;
   }
 
-  const outline = isBrowser
-    ? parseDomain(window.location.href)
-    : parseDomain(env.URL);
+  const outline = parseDomain(isBrowser ? window.location.href : env.URL);
   const domain = parseDomain(href);
+  if (outline.host !== domain.host || outline.port !== domain.port) {
+    return false;
+  }
 
-  return (
-    (outline.host === domain.host && outline.port === domain.port) ||
-    (isBrowser &&
-      window.location.hostname === domain.host &&
-      window.location.port === domain.port)
-  );
+  try {
+    return isPathInBasePath(new URL(href, env.URL).pathname);
+  } catch (_err) {
+    return false;
+  }
 }
 
 /**
@@ -65,15 +71,12 @@ export function isInternalUrl(href: string) {
  * @returns True if a document, false otherwise.
  */
 export function isDocumentUrl(url: string) {
-  try {
-    const parsed = new URL(url, env.URL);
-    return (
-      isInternalUrl(url) &&
-      (parsed.pathname.startsWith("/doc/") || parsed.pathname.startsWith("/d/"))
-    );
-  } catch (_err) {
-    return false;
-  }
+  const pathname = getAppPathname(url);
+  return (
+    !!pathname &&
+    isInternalUrl(url) &&
+    (pathname.startsWith("/doc/") || pathname.startsWith("/d/"))
+  );
 }
 
 /**
@@ -83,12 +86,10 @@ export function isDocumentUrl(url: string) {
  * @returns True if a collection, false otherwise.
  */
 export function isCollectionUrl(url: string) {
-  try {
-    const parsed = new URL(url, env.URL);
-    return isInternalUrl(url) && parsed.pathname.startsWith("/collection/");
-  } catch (_err) {
-    return false;
-  }
+  const pathname = getAppPathname(url);
+  return (
+    !!pathname && isInternalUrl(url) && pathname.startsWith("/collection/")
+  );
 }
 
 type UrlOptions = {
@@ -239,7 +240,7 @@ export function sanitizeImageSrc(src: string | null | undefined) {
   if (allowedImageDataUris.some((scheme) => lower.startsWith(scheme))) {
     return src;
   }
-  return sanitizeUrl(src);
+  return sanitizeUrl(withBasePath(src));
 }
 
 /**
@@ -265,18 +266,11 @@ export function urlRegex(url: string | null | undefined): RegExp | undefined {
  * @returns A share identifier or undefined if not found.
  */
 export function parseShareIdFromUrl(url: string): string | undefined {
-  if (url[0] === "/") {
-    url = `${env.URL}${url}`;
-  }
-
-  let pathname;
-  try {
-    pathname = new URL(url).pathname;
-  } catch (_err) {
+  const split = getAppPathname(url)?.split("/");
+  if (!split) {
     return;
   }
 
-  const split = pathname.split("/");
   const indexOfS = split.indexOf("s");
 
   if (indexOfS >= 0) {

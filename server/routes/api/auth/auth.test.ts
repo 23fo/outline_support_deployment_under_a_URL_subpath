@@ -1,15 +1,21 @@
 import { faker } from "@faker-js/faker";
 import { randomUUID } from "node:crypto";
+import type * as Authentication from "@server/utils/authentication";
 import { buildUser, buildTeam, buildUserPasskey } from "@server/test/factories";
 import { getTestServer, setSelfHosted } from "@server/test/support";
 
 const mockTeamInSessionId = randomUUID();
 
-vi.mock("@server/utils/authentication", () => ({
-  getSessionsInCookie() {
-    return { [mockTeamInSessionId]: {} };
-  },
-}));
+vi.mock("@server/utils/authentication", async (importOriginal) => {
+  const original = await importOriginal<typeof Authentication>();
+
+  return {
+    ...original,
+    getSessionsInCookie() {
+      return { [mockTeamInSessionId]: {} };
+    },
+  };
+});
 
 const server = getTestServer();
 

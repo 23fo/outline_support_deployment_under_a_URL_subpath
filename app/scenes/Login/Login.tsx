@@ -10,6 +10,7 @@ import { s } from "@shared/styles";
 import { Client, UserPreference } from "@shared/types";
 import { isPWA } from "@shared/utils/browser";
 import { parseDomain } from "@shared/utils/domains";
+import { getCookiePath } from "@shared/utils/subpath";
 import type { Config } from "~/stores/AuthStore";
 import { AvatarSize } from "~/components/Avatar";
 import ButtonLarge from "~/components/ButtonLarge";
@@ -116,7 +117,9 @@ function Login({ children, onBack }: Props) {
     // We don't want to set this cookie if we're viewing an error notice via
     // query string(notice =), if there are no query params, or it's already set
     if (Object.keys(entries).length && !query.get("notice") && !existing) {
-      setCookie("signupQueryParams", JSON.stringify(entries));
+      setCookie("signupQueryParams", JSON.stringify(entries), {
+        path: getCookiePath(),
+      });
     }
   }, [query]);
 
@@ -287,7 +290,7 @@ function Login({ children, onBack }: Props) {
               </Note>
               <Form
                 method="POST"
-                action="/auth/email.callback"
+                action={`${env.BASE_PATH}/auth/email.callback`}
                 style={{ width: "100%" }}
               >
                 <input type="hidden" name="email" value={emailLinkSentTo} />

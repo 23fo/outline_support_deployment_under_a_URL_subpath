@@ -1,10 +1,11 @@
 import querystring from "node:querystring";
-import { addMonths } from "date-fns";
+import { addMonths, subMinutes } from "date-fns";
 import type { Context } from "koa";
 import { pick } from "es-toolkit/compat";
 import { toError } from "@shared/utils/error";
 import { Client } from "@shared/types";
 import { getCookieDomain } from "@shared/utils/domains";
+import { getCookiePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import Logger from "@server/logging/Logger";
 import { Event, Collection, View } from "@server/models";
@@ -27,6 +28,19 @@ export function getSessionsInCookie(ctx: Context) {
   } catch (_err) {
     return {};
   }
+}
+
+/**
+ * Expires the browser authentication cookie for the current deployment.
+ *
+ * @param ctx the Koa context.
+ */
+export function clearAccessTokenCookie(ctx: Pick<Context, "cookies">): void {
+  ctx.cookies.set("accessToken", "", {
+    sameSite: "lax",
+    expires: subMinutes(new Date(), 1),
+    path: getCookiePath(env.basePath),
+  });
 }
 
 /**
@@ -106,6 +120,7 @@ export async function signIn(
     sameSite: true,
     expires: new Date("2100"),
     domain,
+    path: getCookiePath(env.basePath),
   });
 
   // On cloud hosted multi-team deployments, record the signed-in team in the
@@ -128,6 +143,7 @@ export async function signIn(
       httpOnly: false,
       expires,
       domain,
+      path: getCookiePath(env.basePath),
     });
   }
 
@@ -150,6 +166,7 @@ export async function signIn(
     ctx.cookies.set("accessToken", user.getSessionToken(expires, service), {
       sameSite: "lax",
       expires,
+      path: getCookiePath(env.basePath),
     });
 
     const defaultCollectionId = team.defaultCollectionId;

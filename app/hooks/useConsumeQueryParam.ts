@@ -24,7 +24,7 @@ export default function useConsumeQueryParam(name: string): string | null {
       params.delete(name);
       const search = params.toString();
       history.replace({
-        pathname: window.location.pathname,
+        pathname: history.location.pathname,
         search: search ? `?${search}` : "",
       });
     }

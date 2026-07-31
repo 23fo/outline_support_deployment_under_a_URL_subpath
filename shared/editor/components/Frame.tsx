@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import type { Optional } from "utility-types";
 import { s } from "../../styles";
-import { sanitizeUrl } from "../../utils/urls";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 
 type Props = Omit<
   Optional<React.ComponentProps<typeof Iframe>>,
@@ -87,7 +87,7 @@ const Frame = ({
           frameBorder="0"
           title="embed"
           loading="lazy"
-          src={sanitizeUrl(src)}
+          src={sanitizeResourceUrl(src)}
           referrerPolicy={referrerPolicy}
           allowFullScreen
           {...rest}

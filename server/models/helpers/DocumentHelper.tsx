@@ -124,7 +124,7 @@ export class DocumentHelper {
     }
   ): Promise<ProsemirrorData> {
     let doc: Node | null;
-    let data;
+    let data: ProsemirrorData;
 
     if ("content" in document && document.content) {
       // Optimized path for documents with content available and no transformation required.
@@ -153,7 +153,7 @@ export class DocumentHelper {
         options.signedUrls
       );
     } else {
-      data = doc?.toJSON() ?? {};
+      data = doc?.toJSON() ?? { type: "doc" };
     }
 
     if (options?.internalUrlBase) {
@@ -277,6 +277,10 @@ export class DocumentHelper {
       signedUrls?: number;
       /** The team context */
       teamId?: string;
+      /** The base URL to use for document and collection links */
+      internalUrlBase?: string;
+      /** The base URL to use for other application-relative URLs */
+      applicationUrlBase?: string;
     }
   ) {
     let node = DocumentHelper.toProsemirror(document);
@@ -286,6 +290,15 @@ export class DocumentHelper {
         node,
         options.teamId,
         options.signedUrls
+      );
+      node = Node.fromJSON(schema, data);
+    }
+
+    if (options?.internalUrlBase || options?.applicationUrlBase) {
+      const data = ProsemirrorHelper.replaceInternalUrls(
+        node,
+        options.internalUrlBase,
+        options.applicationUrlBase
       );
       node = Node.fromJSON(schema, data);
     }

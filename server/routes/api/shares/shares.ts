@@ -464,12 +464,8 @@ router.get(
       return;
     }
 
-    const baseUrl = share.domain
-      ? `https://${share.domain}`
-      : `${share.team.url ?? process.env.URL}/s/${id}`;
-
     ctx.set("Content-Type", "application/xml");
-    ctx.body = navigationNodeToSitemap(sharedTree, baseUrl);
+    ctx.body = navigationNodeToSitemap(sharedTree, share.canonicalUrl);
   }
 );
 

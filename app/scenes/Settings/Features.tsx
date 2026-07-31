@@ -10,6 +10,7 @@ import Scene from "~/components/Scene";
 import Switch from "~/components/Switch";
 import Text from "~/components/Text";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
+import { urlify } from "~/utils/routeHelpers";
 import SettingRow from "./components/SettingRow";
 import Input from "~/components/Input";
 import Tooltip from "~/components/Tooltip";
@@ -47,7 +48,7 @@ function Features() {
     toast.success(t("Copied to clipboard"));
   }, [t]);
 
-  const mcpEndpoint = window.location.origin + "/mcp";
+  const mcpEndpoint = urlify("/mcp");
 
   return (
     <Scene title={t("AI")} icon={<SparklesIcon />}>

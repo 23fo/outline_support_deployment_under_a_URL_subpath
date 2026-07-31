@@ -2,6 +2,23 @@ import env from "../env";
 import * as urlsUtils from "./urls";
 import { urlRegex } from "./urls";
 
+const originalBasePath = env.BASE_PATH;
+const originalUrl = env.URL;
+
+beforeEach(() => {
+  env.BASE_PATH = "";
+  env.URL = "https://example.com";
+});
+
+afterAll(() => {
+  if (originalBasePath === undefined) {
+    delete env.BASE_PATH;
+  } else {
+    env.BASE_PATH = originalBasePath;
+  }
+  env.URL = originalUrl;
+});
+
 describe("isUrl", () => {
   it("should return false for invalid url", () => {
     expect(urlsUtils.isUrl("")).toBe(false);
@@ -97,7 +114,8 @@ describe("isBase64Url", () => {
 
 describe("isInternalUrl", () => {
   beforeEach(() => {
-    env.URL = "https://example.com:3000";
+    env.BASE_PATH = "/apps/knowledge";
+    env.URL = "https://example.com:3000/apps/knowledge";
   });
 
   it("should return false if empty string", () => {
@@ -114,6 +132,50 @@ describe("isInternalUrl", () => {
 
   it("should return true if starting with relative path", () => {
     expect(urlsUtils.isInternalUrl("/drafts")).toEqual(true);
+  });
+
+  // The current location is the reference in the browser, env.URL on the server.
+  const origin =
+    typeof window === "undefined"
+      ? "https://example.com:3000"
+      : window.location.origin;
+
+  it("returns true for an absolute URL inside the application base path", () => {
+    expect(urlsUtils.isInternalUrl(`${origin}/apps/knowledge/doc/test`)).toBe(
+      true
+    );
+  });
+
+  it("returns false for a same-origin URL outside the application base path", () => {
+    expect(urlsUtils.isInternalUrl(`${origin}/grafana`)).toBe(false);
+    expect(
+      urlsUtils.isInternalUrl(`${origin}/apps/knowledge-base/doc/test`)
+    ).toBe(false);
+  });
+
+  it("returns false for protocol-relative URLs on another host", () => {
+    expect(urlsUtils.isInternalUrl("//evil.example.net/doc/test")).toBe(false);
+  });
+
+  it("returns false for text that is not a URL at a root deployment", () => {
+    env.BASE_PATH = "";
+    env.URL = "https://example.com:3000";
+
+    expect(urlsUtils.isInternalUrl("foo")).toBe(false);
+    expect(urlsUtils.isInternalUrl("google.com")).toBe(false);
+    expect(urlsUtils.isExternalUrl("google.com")).toBe(true);
+  });
+
+  it("returns false in the browser for the configured host when viewing another host", () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    expect(
+      urlsUtils.isInternalUrl(
+        "https://example.com:3000/apps/knowledge/doc/test"
+      )
+    ).toBe(false);
   });
 });
 
@@ -307,6 +369,25 @@ describe("parseShareIdFromUrl", () => {
 
   it("should return undefined for invalid urls", () => {
     expect(urlsUtils.parseShareIdFromUrl("not a url")).toBeUndefined();
+  });
+
+  it("removes a base path containing a share route segment", () => {
+    const previousBasePath = env.BASE_PATH;
+    const previousUrl = env.URL;
+    env.BASE_PATH = "/s/outline";
+    env.URL = "https://app.example.com/s/outline";
+
+    try {
+      expect(
+        urlsUtils.parseShareIdFromUrl(
+          "https://app.example.com/s/outline/s/my-share/doc/test"
+        )
+      ).toBe("my-share");
+      expect(urlsUtils.parseShareIdFromUrl("/s/outline")).toBe("outline");
+    } finally {
+      env.BASE_PATH = previousBasePath;
+      env.URL = previousUrl;
+    }
   });
 });
 

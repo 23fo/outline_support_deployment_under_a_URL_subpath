@@ -3,6 +3,8 @@ import { capitalize } from "es-toolkit/compat";
 import httpErrors from "http-errors";
 import type { UserRole } from "@shared/types";
 import { UserRoleHelper } from "@shared/utils/UserRoleHelper";
+import { withoutBasePath } from "@shared/utils/subpath";
+import env from "@server/env";
 import tracer, {
   addTags,
   getRootSpanFromRequestContext,
@@ -179,7 +181,8 @@ async function validateAuthentication(
     if (authentication.accessTokenExpiresAt < new Date()) {
       throw AuthenticationError("Access token is expired");
     }
-    if (!authentication.canAccess(ctx.originalUrl)) {
+    const requestPath = withoutBasePath(ctx.originalUrl, env.basePath);
+    if (!authentication.canAccess(requestPath)) {
       throw AuthorizationError(
         "Access token does not have access to this resource"
       );
@@ -222,7 +225,8 @@ async function validateAuthentication(
       throw AuthenticationError("API key is expired");
     }
 
-    if (!apiKey.canAccess(ctx.originalUrl)) {
+    const requestPath = withoutBasePath(ctx.originalUrl, env.basePath);
+    if (!apiKey.canAccess(requestPath)) {
       throw AuthorizationError("API key does not have access to this resource");
     }
 

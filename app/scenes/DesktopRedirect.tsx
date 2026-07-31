@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import styled from "styled-components";
 import Flex from "~/components/Flex";
 import useQuery from "~/hooks/useQuery";
+import { desktopify } from "~/utils/routeHelpers";
 import { SigningIn } from "./Login/components/SigningIn";
 
 const DesktopRedirect = () => {
@@ -10,10 +11,8 @@ const DesktopRedirect = () => {
 
   useEffect(() => {
     if (token) {
-      window.open(
-        `outline://${window.location.host}/auth/redirect?token=${token}`,
-        "_self"
-      );
+      const search = new URLSearchParams({ token });
+      window.open(desktopify(`/auth/redirect?${search.toString()}`), "_self");
 
       // Clean the url after a short delay so it's not possible to hit reload, re-using the transfer token
       // will not work and changing the location immediately cancels the window.open call in Safari.

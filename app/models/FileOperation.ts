@@ -7,6 +7,7 @@ import {
   type FileOperationFormat,
 } from "@shared/types";
 import { bytesToHumanReadable } from "@shared/utils/files";
+import { withBasePath } from "@shared/utils/subpath";
 import type FileOperationsStore from "~/stores/FileOperationsStore";
 import User from "./User";
 import Model from "./base/Model";
@@ -46,7 +47,7 @@ class FileOperation extends Model {
 
   @computed
   get downloadUrl(): string {
-    return `/api/fileOperations.redirect?id=${this.id}`;
+    return withBasePath(`/api/fileOperations.redirect?id=${this.id}`);
   }
 
   // Hooks

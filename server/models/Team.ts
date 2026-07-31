@@ -28,13 +28,10 @@ import { isEmail } from "validator";
 import { TeamPreferenceDefaults } from "@shared/constants";
 import type { TeamPreferences } from "@shared/types";
 import { TeamPreference, UserRole } from "@shared/types";
-import {
-  getBaseDomain,
-  parseDomain,
-  RESERVED_SUBDOMAINS,
-} from "@shared/utils/domains";
+import { getBaseDomain, RESERVED_SUBDOMAINS } from "@shared/utils/domains";
 import { attachmentRedirectRegex } from "@shared/utils/ProsemirrorHelper";
 import { parseEmail } from "@shared/utils/email";
+import { isPathInBasePath } from "@shared/utils/subpath";
 import { TeamValidation } from "@shared/validations";
 import env from "@server/env";
 import { ValidationError } from "@server/errors";
@@ -278,7 +275,8 @@ class Team extends ParanoidModel<
 
     // custom domain
     if (this.domain) {
-      return `${url.protocol}//${this.domain}${url.port ? `:${url.port}` : ""}`;
+      url.hostname = this.domain;
+      return url.href.replace(/\/$/, "");
     }
 
     if (!this.subdomain || !env.isCloudHosted) {
@@ -300,7 +298,18 @@ class Team extends ParanoidModel<
     if (!url) {
       return false;
     }
-    return parseDomain(url).host === parseDomain(this.url).host;
+
+    try {
+      const candidate = new URL(url);
+      const teamUrl = new URL(this.url);
+      return (
+        candidate.hostname === teamUrl.hostname &&
+        candidate.port === teamUrl.port &&
+        isPathInBasePath(candidate.pathname, env.basePath)
+      );
+    } catch (_err) {
+      return false;
+    }
   }
 
   /**

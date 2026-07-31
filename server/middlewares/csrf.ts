@@ -11,6 +11,8 @@ import {
 } from "@server/utils/csrf";
 import { CSRF } from "@shared/constants";
 import { CSRFError } from "@server/errors";
+import { getCSRFTokenCookieName } from "@shared/utils/csrf";
+import { getCookiePath, withoutBasePath } from "@shared/utils/subpath";
 import { parseAuthentication } from "./authentication";
 
 /**
@@ -27,15 +29,12 @@ export function attachCSRFToken() {
       // Set cookie that JavaScript can read (not HttpOnly). Unlike the UI hint
       // cookies, this one is deliberately host-only and never scoped to the
       // base domain
-      ctx.cookies.set(
-        secure ? CSRF.secureCookieName : CSRF.cookieName,
-        bundled,
-        {
-          httpOnly: false,
-          sameSite: "lax",
-          secure,
-        }
-      );
+      ctx.cookies.set(getCSRFTokenCookieName(secure, env.basePath), bundled, {
+        httpOnly: false,
+        sameSite: "lax",
+        secure,
+        path: getCookiePath(env.basePath),
+      });
     }
 
     await next();
@@ -62,7 +61,8 @@ export function verifyCSRFToken() {
     }
 
     // For API routes, use AuthenticationHelper to determine if the operation is read-only
-    if (ctx.originalUrl.startsWith("/api/")) {
+    const requestPath = withoutBasePath(ctx.originalUrl, env.basePath);
+    if (requestPath.startsWith("/api/")) {
       const canAccessWithReadOnly = AuthenticationHelper.canAccess(ctx.path, [
         Scope.Read,
       ]);

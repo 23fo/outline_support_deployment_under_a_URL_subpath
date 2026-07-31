@@ -69,10 +69,11 @@ export function allowStyleSrc(ctx: Context, sources: string[]) {
  */
 export default function createCSPMiddleware(options?: CSPOptions) {
   // Construct scripts CSP based on options in use
+  const origin = new URL(env.URL).origin;
   const defaultSrc: string[] = ["'self'"];
   const scriptSrc: string[] = [];
   const styleSrc: string[] = ["'self'", "'unsafe-inline'"];
-  const objectSrc: string[] = [env.URL, "'self'"];
+  const objectSrc: string[] = [origin, "'self'"];
 
   if (env.isCloudHosted) {
     scriptSrc.push("www.googletagmanager.com");
@@ -82,10 +83,12 @@ export default function createCSPMiddleware(options?: CSPOptions) {
 
   // Allow to load assets from Vite
   if (!env.isProduction) {
-    scriptSrc.push(env.URL.replace(`:${env.PORT}`, ":3001"));
+    scriptSrc.push(origin.replace(`:${env.PORT}`, ":3001"));
     scriptSrc.push("localhost:3001");
   } else {
-    scriptSrc.push(env.URL);
+    // A source path must end in a slash to match everything beneath it, without
+    // one it would only match the exact path of the application root.
+    scriptSrc.push(`${origin}${env.basePath}/`);
   }
 
   if (env.GOOGLE_ANALYTICS_ID) {
@@ -126,11 +129,10 @@ export default function createCSPMiddleware(options?: CSPOptions) {
           styleSrc: uniq([...styleSrc, ...(ctx.state.cspStyleSrc as string[])]),
           scriptSrc: uniq([
             ...scriptSrc,
-            // Allow the service worker to importScripts the workbox runtime,
-            // which is served under /static on the document host.. Scoped to
-            // the /static path so only immutable build assets are permitted,
-            // not ugc served elsewhere on the same origin.
-            `${ctx.host}/static/`,
+            // Allow the service worker to importScripts the workbox runtime.
+            // Scope this source to immutable assets under the configured app
+            // path rather than allowing scripts from the entire document host.
+            `${ctx.host}${env.basePath}/static/`,
             ...(options?.extraScriptSrc ?? []),
             ...(ctx.state.cspScriptSrc as string[]),
             env.DEVELOPMENT_UNSAFE_INLINE_CSP

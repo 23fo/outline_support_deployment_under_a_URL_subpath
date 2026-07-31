@@ -29,6 +29,7 @@ import { client } from "~/utils/ApiClient";
 import { AuthorizationError, OfflineError } from "~/utils/errors";
 import isCloudHosted from "~/utils/isCloudHosted";
 import { changeLanguage, detectLanguage } from "~/utils/language";
+import { urlify } from "~/utils/routeHelpers";
 import Loading from "../Document/components/Loading";
 import ErrorOffline from "../Errors/ErrorOffline";
 import { Collection as CollectionScene } from "./Collection";
@@ -257,7 +258,10 @@ function SharedScene() {
       <Helmet>
         <link
           rel="canonical"
-          href={canonicalOrigin + location.pathname.replace(/\/$/, "")}
+          href={urlify(
+            location.pathname.replace(/\/$/, "") || "/",
+            canonicalOrigin
+          )}
         />
       </Helmet>
       <TeamContext.Provider value={team}>
