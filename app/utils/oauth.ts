@@ -1,5 +1,6 @@
 import { setCookie } from "tiny-cookie";
 import { randomString } from "@shared/random";
+import { getCookiePath } from "@shared/utils/subpath";
 
 /**
  * Generate a random nonce, persist it in a same-origin cookie, and return it
@@ -14,7 +15,7 @@ import { randomString } from "@shared/random";
 export function generateOAuthStateNonce(cookieName: string): string {
   const nonce = randomString(32);
   setCookie(cookieName, nonce, {
-    path: "/",
+    path: getCookiePath(),
     "max-age": 600,
     samesite: "Lax",
     secure: window.location.protocol === "https:",

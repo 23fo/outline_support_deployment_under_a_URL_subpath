@@ -1,7 +1,18 @@
 import sharedEnv from "../env";
 import parseDocumentSlug from "./parseDocumentSlug";
 
-sharedEnv.URL = "https://app.outline.dev";
+const originalBasePath = sharedEnv.BASE_PATH;
+const originalUrl = sharedEnv.URL;
+
+beforeEach(() => {
+  sharedEnv.BASE_PATH = "";
+  sharedEnv.URL = "https://app.outline.dev";
+});
+
+afterAll(() => {
+  sharedEnv.BASE_PATH = originalBasePath;
+  sharedEnv.URL = originalUrl;
+});
 
 describe("#parseDocumentSlug", () => {
   it("should work with fully qualified url", () => {
@@ -42,5 +53,17 @@ describe("#parseDocumentSlug", () => {
     expect(parseDocumentSlug("/doc/my-doc-y4j4tR4UuV#my-heading-hash")).toEqual(
       "my-doc-y4j4tR4UuV"
     );
+  });
+
+  it("removes a base path containing a document route segment", () => {
+    sharedEnv.BASE_PATH = "/doc/outline";
+    sharedEnv.URL = "https://app.outline.dev/doc/outline";
+
+    expect(
+      parseDocumentSlug(
+        "https://app.outline.dev/doc/outline/doc/title-documentId"
+      )
+    ).toEqual("title-documentId");
+    expect(parseDocumentSlug("/doc/outline")).toEqual("outline");
   });
 });

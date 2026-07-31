@@ -19,6 +19,7 @@ import {
   getSessionsCookieExpiry,
   parseSessionsCookie,
 } from "@shared/utils/sessions";
+import { getCookiePath, withoutBasePath } from "@shared/utils/subpath";
 import type RootStore from "~/stores/RootStore";
 import Team from "~/models/Team";
 import env from "~/env";
@@ -245,17 +246,20 @@ export default class AuthStore extends Store<Team> {
         // Redirect to the correct custom domain or team subdomain if needed
         // Occurs when the (sub)domain is changed in admin and the user hits an old url
         const { hostname, pathname } = window.location;
+        // data.team.url already includes the configured application base path.
+        // Remove it from the current browser path before joining the two values.
+        const relativePath = withoutBasePath(pathname);
 
         if (data.team.domain) {
           if (data.team.domain !== hostname) {
-            window.location.href = `${data.team.url}${pathname}`;
+            window.location.href = `${data.team.url}${relativePath}`;
             return;
           }
         } else if (
           isCloudHosted &&
           parseDomain(hostname).teamSubdomain !== (data.team.subdomain ?? "")
         ) {
-          window.location.href = `${data.team.url}${pathname}`;
+          window.location.href = `${data.team.url}${relativePath}`;
           return;
         }
 
@@ -357,7 +361,9 @@ export default class AuthStore extends Store<Team> {
     // if this logout was forced from an authenticated route then
     // save the current path so we can go back there once signed in
     if (savePath) {
-      setPostLoginPath(window.location.pathname + window.location.search);
+      setPostLoginPath(
+        withoutBasePath(window.location.pathname + window.location.search)
+      );
     }
 
     if (revokeToken) {
@@ -390,7 +396,7 @@ export default class AuthStore extends Store<Team> {
       const expires = getSessionsCookieExpiry(sessions);
       const options = {
         domain: getCookieDomain(window.location.hostname, isCloudHosted),
-        path: "/",
+        path: getCookiePath(),
       };
       if (expires) {
         setCookie("sessions", JSON.stringify(sessions), {

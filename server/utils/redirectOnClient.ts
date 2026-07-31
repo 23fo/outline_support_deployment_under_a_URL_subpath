@@ -1,7 +1,9 @@
 import { escape } from "es-toolkit/compat";
 import { isbot } from "isbot";
 import type { Context } from "koa";
+import { withBasePath } from "@shared/utils/subpath";
 import { addMissingUrlPort } from "@shared/utils/urls";
+import env from "@server/env";
 
 /**
  * Performs a redirect on the browser so that the user's auth cookies are
@@ -18,10 +20,11 @@ export function redirectOnClient(
 ) {
   const url = addMissingUrlPort(redirectTo);
   this.type = "text/html";
+  const redirectUrl = withBasePath(url, env.basePath);
 
   if (method === "POST") {
     // For POST method, create a form that auto-submits
-    const urlObj = new URL(url);
+    const urlObj = new URL(redirectUrl, this.request.URL.origin);
     const formAction = `${urlObj.origin}${urlObj.pathname}`;
     const searchParams = urlObj.searchParams;
 
@@ -66,7 +69,7 @@ export function redirectOnClient(
     this.body = `
 <html lang="en">
 <head>
-<meta http-equiv="refresh" content="0;URL='${escape(url)}'" />
+<meta http-equiv="refresh" content="0;URL='${escape(redirectUrl)}'" />
 </head>
 </html>`;
   }

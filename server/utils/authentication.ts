@@ -1,11 +1,12 @@
 import querystring from "node:querystring";
-import { addMonths } from "date-fns";
+import { addMonths, subMinutes } from "date-fns";
 import type { Context } from "koa";
 import { pick } from "es-toolkit/compat";
 import { toError } from "@shared/utils/error";
 import { Client } from "@shared/types";
 import { getCookieDomain } from "@shared/utils/domains";
 import { getActiveSessions } from "@shared/utils/sessions";
+import { getCookiePath, withBasePath } from "@shared/utils/subpath";
 import env from "@server/env";
 import Logger from "@server/logging/Logger";
 import { Event, Collection, View } from "@server/models";
@@ -40,9 +41,22 @@ export function getSessionRedirectUrl(
   }
 
   const url = new URL(candidates[0].url);
-  url.pathname = ctx.path;
+  url.pathname = withBasePath(ctx.path, env.basePath);
   url.search = ctx.search;
   return url.toString();
+}
+
+/**
+ * Expires the browser authentication cookie for the current deployment.
+ *
+ * @param ctx the Koa context.
+ */
+export function clearAccessTokenCookie(ctx: Pick<Context, "cookies">): void {
+  ctx.cookies.set("accessToken", "", {
+    sameSite: "lax",
+    expires: subMinutes(new Date(), 1),
+    path: getCookiePath(env.basePath),
+  });
 }
 
 /**
@@ -122,6 +136,7 @@ export async function signIn(
     sameSite: true,
     expires: new Date("2100"),
     domain,
+    path: getCookiePath(env.basePath),
   });
 
   // On cloud hosted multi-team deployments, record the signed-in team in the
@@ -150,6 +165,7 @@ export async function signIn(
     ctx.cookies.set("accessToken", user.getSessionToken(expires, service), {
       sameSite: "lax",
       expires,
+      path: getCookiePath(env.basePath),
     });
     clearCSRFCookie(ctx);
 

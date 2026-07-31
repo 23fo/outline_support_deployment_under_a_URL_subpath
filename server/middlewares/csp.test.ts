@@ -96,3 +96,45 @@ describe("csp middleware", () => {
     expect(objectSrc).not.toContain("https://s3.eu-central-1.amazonaws.com");
   });
 });
+
+describe("csp middleware base path", () => {
+  const originalUrl = env.URL;
+
+  afterEach(() => {
+    env.URL = originalUrl;
+  });
+
+  async function getScriptSrc(url: string) {
+    env.URL = url;
+
+    const app = new Koa();
+    app.proxy = true;
+    app.use(createCSPMiddleware());
+    app.use((ctx) => {
+      ctx.body = "ok";
+    });
+
+    const server = new TestServer(app);
+    try {
+      const res = await server.get("/", {
+        headers: { "x-forwarded-host": "docs.example.com" },
+      });
+      return res.headers.get("content-security-policy") ?? "";
+    } finally {
+      server.close();
+    }
+  }
+
+  it("allows service worker assets under the configured base path", async () => {
+    const policy = await getScriptSrc("https://app.example.com/outline");
+
+    expect(policy).toContain("docs.example.com/outline/static/");
+  });
+
+  it("keeps the root deployment service worker path unchanged", async () => {
+    const policy = await getScriptSrc("https://app.example.com");
+
+    expect(policy).toContain("docs.example.com/static/");
+    expect(policy).not.toContain("docs.example.com//static/");
+  });
+});

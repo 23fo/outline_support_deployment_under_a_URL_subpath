@@ -7,6 +7,7 @@ import { send } from "@koa/send";
 import { languages } from "@shared/i18n";
 import { TeamPreference } from "@shared/types";
 import { parseDomain } from "@shared/utils/domains";
+import { withBasePath } from "@shared/utils/subpath";
 import { Day } from "@shared/utils/time";
 import env from "@server/env";
 import { NotFoundError } from "@server/errors";
@@ -81,7 +82,7 @@ if (env.isProduction) {
         maxAge: Day.ms * 365,
         immutable: true,
         setHeaders: (res, filePath) => {
-          res.setHeader("Service-Worker-Allowed", "/");
+          res.setHeader("Service-Worker-Allowed", `${env.basePath}/`);
           res.setHeader("Access-Control-Allow-Origin", "*");
 
           // The service worker is not hashed and must always be revalidated
@@ -220,7 +221,7 @@ router.get("{/*path}", async (ctx, next) => {
     // and hosted subdomains, if the request arrived on a different host.
     else if (team && !team.isTeamUrl(ctx.href)) {
       const url = new URL(team.url);
-      url.pathname = ctx.path;
+      url.pathname = withBasePath(ctx.path, env.basePath);
       url.search = ctx.search;
       ctx.redirect(url.toString());
       return;

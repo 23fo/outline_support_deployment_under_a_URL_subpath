@@ -1,5 +1,6 @@
 import type { Team } from "@server/models";
 import type { NavigationNode } from "@shared/types";
+import { resolveAppUrl } from "@shared/utils/subpath";
 
 export interface PresentedNavigationNode {
   id: string;
@@ -23,9 +24,7 @@ export default function presentNavigationNode(
   return {
     id: node.id,
     title: node.title,
-    url: /^https?:\/\//.test(node.url)
-      ? node.url
-      : new URL(node.url, team.url).href,
+    url: resolveAppUrl(node.url, team.url),
     children: (node.children ?? []).map((child) =>
       presentNavigationNode(team, child)
     ),

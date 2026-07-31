@@ -1,4 +1,4 @@
-import { subHours, subMinutes } from "date-fns";
+import { subHours } from "date-fns";
 import Router from "@koa/router";
 import { uniqBy } from "es-toolkit/compat";
 import { TeamPreference } from "@shared/types";
@@ -21,6 +21,7 @@ import {
 import ValidateSSOAccessTask from "@server/queues/tasks/ValidateSSOAccessTask";
 import type { APIContext } from "@server/types";
 import { AuthenticationType } from "@server/types";
+import { clearAccessTokenCookie } from "@server/utils/authentication";
 import { clearCSRFCookie } from "@server/utils/csrf";
 import { getJWTPayload } from "@server/utils/jwt";
 import { SessionsCookieHelper } from "@server/utils/SessionsCookieHelper";
@@ -210,10 +211,7 @@ router.post(
 
     void RateLimiter.clearCachedToken(token);
 
-    ctx.cookies.set("accessToken", "", {
-      sameSite: "lax",
-      expires: subMinutes(new Date(), 1),
-    });
+    clearAccessTokenCookie(ctx);
     clearCSRFCookie(ctx);
     SessionsCookieHelper.logout(ctx, user.teamId);
 

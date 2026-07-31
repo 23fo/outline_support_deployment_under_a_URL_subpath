@@ -5,9 +5,9 @@ import useDragResize from "./hooks/useDragResize";
 import { ResizeLeft, ResizeRight } from "./ResizeHandle";
 import type { ComponentProps } from "../types";
 import { isFirefox } from "../../utils/browser";
-import { sanitizeUrl } from "../../utils/urls";
 import Flex from "../../components/Flex";
 import { s } from "../../styles";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 import { Preview, Subtitle, Title } from "./Widget";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 import { pdfNaturalHeight, pdfNaturalWidth } from "../lib/pdf";
@@ -26,6 +26,7 @@ type Props = ComponentProps & {
 export default function PdfViewer(props: Props) {
   const { node, isEditable, onChangeSize, isSelected } = props;
   const { href, name } = node.attrs;
+  const src = sanitizeResourceUrl(href);
   const ref = useRef<HTMLDivElement>(null);
   const embedRef = useRef<HTMLEmbedElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -62,7 +63,7 @@ export default function PdfViewer(props: Props) {
             embedRef.current.src = "";
             requestAnimationFrame(() => {
               if (embedRef.current) {
-                embedRef.current.src = sanitizeUrl(href) ?? "";
+                embedRef.current.src = src ?? "";
               }
             });
           }
@@ -78,7 +79,7 @@ export default function PdfViewer(props: Props) {
         }
       };
     },
-    [dragging, href]
+    [dragging, src]
   );
 
   const mergedRef = useMergeRefs([ref, observeRef]);
@@ -104,7 +105,7 @@ export default function PdfViewer(props: Props) {
       </Flex>
       <embed
         title={name}
-        src={sanitizeUrl(href)}
+        src={src}
         ref={embedRef}
         style={{
           width: "100%",

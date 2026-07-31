@@ -83,6 +83,78 @@ describe("DocumentHelper", () => {
         type: "doc",
       });
     });
+
+    it("should resolve application URLs when exporting Markdown", async () => {
+      const content: ProsemirrorData = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "document",
+                marks: [
+                  {
+                    type: "link",
+                    attrs: { href: "/doc/internal-123" },
+                  },
+                ],
+              },
+              {
+                type: "image",
+                attrs: {
+                  src: "/api/attachments.redirect?id=image",
+                  alt: "image",
+                },
+              },
+              {
+                type: "image",
+                attrs: {
+                  src: "//cdn.example.com/image.png",
+                  alt: "CDN image",
+                },
+              },
+            ],
+          },
+          {
+            type: "attachment",
+            attrs: {
+              href: "/api/attachments.redirect?id=file",
+              title: "file.pdf",
+              size: 10,
+            },
+          },
+          {
+            type: "video",
+            attrs: {
+              src: "https://cdn.example.com/video.mp4",
+              title: "video.mp4",
+            },
+          },
+        ],
+      };
+      const original = structuredClone(content);
+
+      const result = await DocumentHelper.toMarkdown(content, {
+        includeTitle: false,
+        internalUrlBase: "https://example.com/apps/knowledge/s/share-123",
+        applicationUrlBase: "https://example.com/apps/knowledge",
+      });
+
+      expect(result).toContain(
+        "https://example.com/apps/knowledge/s/share-123/doc/internal-123"
+      );
+      expect(result).toContain(
+        "https://example.com/apps/knowledge/api/attachments.redirect?id=image"
+      );
+      expect(result).toContain(
+        "https://example.com/apps/knowledge/api/attachments.redirect?id=file"
+      );
+      expect(result).toContain("//cdn.example.com/image.png");
+      expect(result).toContain("https://cdn.example.com/video.mp4");
+      expect(content).toEqual(original);
+    });
   });
 
   describe("toProsemirror", () => {

@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { find } from "es-toolkit/compat";
 import Flex from "../../components/Flex";
 import { s } from "../../styles";
-import { isExternalUrl, sanitizeImageSrc, sanitizeUrl } from "../../utils/urls";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
+import { isExternalUrl, sanitizeImageSrc } from "../../utils/urls";
 import { getDisplayUrl } from "../lib/uploadPlaceholder";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 import type { ComponentProps } from "../types";
@@ -248,7 +249,7 @@ const Image = (props: Props) => {
           </Error>
         ) : (
           <a
-            href={sanitizeUrl(imageLink)}
+            href={sanitizeResourceUrl(imageLink)}
             // Do not show hover preview when the image is selected
             className={!isSelected ? "use-hover-preview" : ""}
             target="_blank"

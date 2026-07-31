@@ -2,6 +2,7 @@ import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { errToString } from "@shared/utils/error";
 import env from "@server/env";
+import { resolveAppUrl } from "@shared/utils/subpath";
 import { Collection, Share, type Team, type User } from "@server/models";
 import { addTags } from "@server/logging/tracer";
 import { traceFunction } from "@server/logging/tracing";
@@ -463,12 +464,7 @@ export function pathToUrl(team: Team, input: Record<string, unknown>) {
 
   for (const [key, value] of Object.entries(input)) {
     if (["url", "path"].includes(key) && typeof value === "string") {
-      // check for existing protocol to avoid double joining
-      if (/^https?:\/\//.test(value)) {
-        input[key] = value;
-      } else {
-        input[key] = new URL(value, baseUrl).href;
-      }
+      input[key] = resolveAppUrl(value, baseUrl);
     }
   }
 

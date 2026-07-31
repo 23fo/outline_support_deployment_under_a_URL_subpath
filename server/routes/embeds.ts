@@ -21,13 +21,13 @@ const resizeObserverScript = (
 
 /**
  * Script that checks if the iframe is being loaded in an iframe. If it is not, it redirects to the
- * origin URL.
+ * application root.
  */
 const iframeCheckScript = (
   ctx: Context
 ) => `<script nonce="${ctx.state.cspNonce}">
   if (window.self === window.top) {
-    window.location.href = window.location.origin;
+    window.location.href = "${env.basePath}/";
   }
 </script>`;
 

@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 import { iconNames } from "@shared/utils/IconNames";
+import env from "@server/env";
 import { attachmentTools } from "./tools/attachments";
 import { collectionTools } from "./tools/collections";
 import { commentTools } from "./tools/comments";
@@ -106,7 +107,7 @@ const defaultInstructions = `Document markdown content must not begin with a top
 
 Document and collection markdown support @mentions using the syntax: @[Display Name](mention://user/userId). For example: @[John Doe](mention://user/c9a1b2e3-...). Use the "list_users" tool to find user IDs.
 
-Read images and attachments with the "fetch" tool by setting resource to "attachment" and passing either the attachment ID or an /api/attachments.redirect?id=... URL; the tool will return a signed URL for download.
+Read images and attachments with the "fetch" tool by setting resource to "attachment" and passing either the attachment ID or an ${env.basePath}/api/attachments.redirect?id=... URL; the tool will return a signed URL for download.
 
 Base64-encoded images are supported in document content for all formats. When creating a document from HTML that includes images or videos, pass the markup with format "html" — remote URLs and base64 media are imported as attachments automatically. Do not convert such HTML to markdown, and do not upload the HTML file itself as an attachment.
 
