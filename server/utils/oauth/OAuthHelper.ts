@@ -1,5 +1,6 @@
 import type { Context } from "koa";
 import type { OAuthClientValidation } from "@shared/validations";
+import { protectedResourceMetadataPath } from "@shared/utils/oauthMetadata";
 import {
   isLoopbackUri,
   isPrivateUseSchemeUrl,
@@ -134,7 +135,9 @@ export class OAuthHelper {
    * @returns the origin, e.g. "https://app.getoutline.com".
    */
   public static getIssuer(ctx: Context): string {
-    return env.isCloudHosted ? ctx.request.URL.origin : new URL(env.URL).origin;
+    return env.isCloudHosted
+      ? `${ctx.request.URL.origin}${env.basePath}`
+      : env.URL.replace(/\/+$/, "");
   }
 
   /**
@@ -146,6 +149,7 @@ export class OAuthHelper {
    * @returns the header value for a Bearer challenge.
    */
   public static mcpBearerChallenge(issuer: string): string {
-    return `Bearer resource_metadata="${issuer}/.well-known/oauth-protected-resource/mcp", scope="${OAuthHelper.mcpScopes.join(" ")}"`;
+    const metadataPath = protectedResourceMetadataPath(`${env.basePath}/mcp`);
+    return `Bearer resource_metadata="${new URL(issuer).origin}${metadataPath}", scope="${OAuthHelper.mcpScopes.join(" ")}"`;
   }
 }

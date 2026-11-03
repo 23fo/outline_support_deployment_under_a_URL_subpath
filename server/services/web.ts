@@ -22,6 +22,7 @@ import api from "../routes/api";
 import auth from "../routes/auth";
 import mcp from "../routes/mcp";
 import oauth from "../routes/oauth";
+import { createWellKnownApp } from "../routes/wellKnown";
 import type { UserAgentContext } from "koa-useragent";
 import userAgent from "koa-useragent";
 
@@ -92,6 +93,9 @@ export default function init(app: Koa = new Koa(), server?: Server) {
 
   // Keep internal Koa routes relative to their mount path.
   app.use(subpathRedirect(basePath));
+  if (basePath) {
+    app.use(mount(createWellKnownApp(basePath)));
+  }
   routedApp.use(mount("/api", api));
   routedApp.use(mount("/mcp", mcp));
 
