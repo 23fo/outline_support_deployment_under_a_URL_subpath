@@ -8,7 +8,7 @@ import mcp from "./mcp";
 const router = new Router();
 
 router.get("/robots.txt", (ctx) => {
-  ctx.body = robotsResponse();
+  ctx.body = robotsResponse(env.basePath);
 });
 
 router.get("/opensearch.xml", (ctx) => {

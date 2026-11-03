@@ -8,6 +8,7 @@ import {
 import env from "@server/env";
 import { OAuthHelper } from "@server/utils/oauth/OAuthHelper";
 import { getTeamFromContext } from "@server/utils/passport";
+import { robotsResponse } from "./discovery/robots";
 
 /**
  * Exposes RFC 8414 / RFC 9728 OAuth discovery paths at the origin root for
@@ -68,6 +69,13 @@ export function createWellKnownApp(basePath = env.basePath): Koa {
         };
       }
     );
+  }
+
+  if (basePath) {
+    router.get("/robots.txt", (ctx) => {
+      ctx.type = "text/plain";
+      ctx.body = robotsResponse(basePath);
+    });
   }
 
   app.use(router.routes());
