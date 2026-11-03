@@ -14,6 +14,7 @@ import Logger from "@server/logging/Logger";
 import Metrics from "@server/logging/Metrics";
 import csp from "@server/middlewares/csp";
 import { attachCSRFToken } from "@server/middlewares/csrf";
+import subpathRedirect from "@server/middlewares/subpathRedirect";
 import { ShutdownHelper, ShutdownOrder } from "@server/utils/ShutdownHelper";
 import { initI18n } from "@server/utils/i18n";
 import routes from "../routes";
@@ -86,31 +87,37 @@ export default function init(app: Koa = new Koa(), server?: Server) {
     Metrics.gaugePerInstance("connections.count", 0);
   });
 
-  app.use(mount("/api", api));
-  app.use(mount("/mcp", mcp));
+  const basePath = env.basePath;
+  const routedApp = new Koa();
+
+  // Keep internal Koa routes relative to their mount path.
+  app.use(subpathRedirect(basePath));
+  routedApp.use(mount("/api", api));
+  routedApp.use(mount("/mcp", mcp));
 
   // Generate and attach a CSRF token to the session on non-API requests
-  app.use(attachCSRFToken());
+  routedApp.use(attachCSRFToken());
 
   // Apply CSP middleware after API as these responses are rendered in the browser
-  app.use(csp());
+  routedApp.use(csp());
 
   // Allow DNS prefetching for performance, we do not care about leaking requests
   // to our own CDN's
-  app.use(
+  routedApp.use(
     helmet.dnsPrefetchControl({
       allow: true,
     })
   );
-  app.use(
+  routedApp.use(
     helmet.referrerPolicy({
       policy: "no-referrer",
     })
   );
 
-  app.use(mount("/auth", auth));
-  app.use(mount("/oauth", oauth));
-  app.use(mount(routes));
+  routedApp.use(mount("/auth", auth));
+  routedApp.use(mount("/oauth", oauth));
+  routedApp.use(mount(routes));
+  app.use(basePath ? mount(basePath, routedApp) : mount(routedApp));
 
   return app;
 }

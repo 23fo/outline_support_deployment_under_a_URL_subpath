@@ -174,6 +174,8 @@ export type IntegrationSettings<T> = T extends IntegrationType.Embed
 export type PublicEnv = {
   /** ID of the share mounted at the root of a custom domain, if any. */
   ROOT_SHARE_ID?: string;
+  /** URL path prefix for installations mounted below the domain root. */
+  BASE_PATH: string;
   /** Whether the page is a publicly shared view. */
   isShare?: boolean;
   analytics: {

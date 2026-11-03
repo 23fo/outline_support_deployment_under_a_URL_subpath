@@ -85,7 +85,7 @@ export default function createCSPMiddleware(options?: CSPOptions) {
   const defaultSrc: string[] = ["'self'"];
   const scriptSrc: string[] = [];
   const styleSrc: string[] = ["'self'", "'unsafe-inline'"];
-  const objectSrc: string[] = [env.URL, "'self'"];
+  const objectSrc: string[] = [new URL(env.URL).origin, "'self'"];
 
   if (env.isCloudHosted) {
     scriptSrc.push("www.googletagmanager.com");
@@ -98,7 +98,7 @@ export default function createCSPMiddleware(options?: CSPOptions) {
     scriptSrc.push(env.URL.replace(`:${env.PORT}`, `:${env.vitePort}`));
     scriptSrc.push(`localhost:${env.vitePort}`);
   } else {
-    scriptSrc.push(env.URL);
+    scriptSrc.push(new URL(env.URL).origin);
   }
 
   if (env.GOOGLE_ANALYTICS_ID) {
@@ -107,9 +107,9 @@ export default function createCSPMiddleware(options?: CSPOptions) {
   }
 
   if (env.CDN_URL) {
-    scriptSrc.push(env.CDN_URL);
-    styleSrc.push(env.CDN_URL);
-    defaultSrc.push(env.CDN_URL);
+    scriptSrc.push(new URL(env.CDN_URL).origin);
+    styleSrc.push(new URL(env.CDN_URL).origin);
+    defaultSrc.push(new URL(env.CDN_URL).origin);
   }
 
   objectSrc.push(...getBucketOrigins());
@@ -143,7 +143,7 @@ export default function createCSPMiddleware(options?: CSPOptions) {
             // which is served under /static on the document host.. Scoped to
             // the /static path so only immutable build assets are permitted,
             // not ugc served elsewhere on the same origin.
-            `${ctx.host}/static/`,
+            `${ctx.host}${env.basePath}/static/`,
             ...(options?.extraScriptSrc ?? []),
             ...(ctx.state.cspScriptSrc as string[]),
             env.DEVELOPMENT_UNSAFE_INLINE_CSP

@@ -1,4 +1,5 @@
 import Router from "@koa/router";
+import env from "@server/env";
 import { Day } from "@shared/utils/time";
 import { opensearchResponse } from "./opensearch";
 import { robotsResponse } from "./robots";
@@ -13,7 +14,7 @@ router.get("/robots.txt", (ctx) => {
 router.get("/opensearch.xml", (ctx) => {
   ctx.type = "text/xml";
   ctx.response.set("Cache-Control", `public, max-age=${7 * Day.seconds}`);
-  ctx.body = opensearchResponse(ctx.request.URL.origin);
+  ctx.body = opensearchResponse(`${ctx.request.URL.origin}${env.basePath}`);
 });
 
 router.use(mcp.routes());
