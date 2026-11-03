@@ -95,7 +95,7 @@ const Frame = ({
           {icon} <Title>{title}</Title>
           {canonicalUrl && (
             <Open
-              href={sanitizeUrl(canonicalUrl)}
+              href={sanitizeResourceUrl(canonicalUrl)}
               target="_blank"
               rel="noopener noreferrer"
             >

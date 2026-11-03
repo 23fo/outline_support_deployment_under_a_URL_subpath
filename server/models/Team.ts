@@ -31,7 +31,6 @@ import type { Plan, PlanFeature, TeamPreferences } from "@shared/types";
 import { TeamPreference, UserRole } from "@shared/types";
 import {
   getBaseDomain,
-  parseDomain,
   RESERVED_SUBDOMAINS,
 } from "@shared/utils/domains";
 import { PlanHelper } from "@shared/utils/PlanHelper";

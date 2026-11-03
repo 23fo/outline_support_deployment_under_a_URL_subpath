@@ -157,7 +157,7 @@ export default class Attachment extends Node {
     ) : (
       <Widget
         icon={<FileExtension title={node.attrs.title} />}
-        href={sanitizeResourceUrl(node.attrs.href)}
+        href={sanitizeResourceUrl(node.attrs.href) ?? ""}
         title={node.attrs.title}
         onMouseDown={this.handleSelect(props)}
         onDoubleClick={() => {
