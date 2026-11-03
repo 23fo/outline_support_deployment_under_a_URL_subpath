@@ -237,7 +237,8 @@ class Share extends IdModel<
   get canonicalUrl() {
     if (this.domain) {
       const url = new URL(env.URL);
-      return `${url.protocol}//${this.domain}${url.port ? `:${url.port}` : ""}`;
+      url.hostname = this.domain;
+      return url.href.replace(/\/$/, "");
     }
 
     return this.urlId

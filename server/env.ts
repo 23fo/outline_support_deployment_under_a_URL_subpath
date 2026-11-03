@@ -251,6 +251,18 @@ export class Environment {
   ).replace(/\/$/, "");
 
   /**
+   * The path under which the application is served, derived from the path
+   * component of URL. Empty when served from the domain root; otherwise this is
+   * a leading-slash path without a trailing slash, for example "/outline".
+   *
+   * @returns the application base path.
+   */
+  public get basePath(): string {
+    const pathname = new URL(this.URL).pathname.replace(/\/+$/, "");
+    return pathname === "/" ? "" : pathname;
+  }
+
+  /**
    * If using a Cloudfront/Cloudflare distribution or similar it can be set below.
    * This will cause paths to javascript, stylesheets, and images to be updated to
    * the hostname defined in CDN_URL. In your CDN configuration the origin server
