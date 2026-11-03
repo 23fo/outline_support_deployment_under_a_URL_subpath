@@ -296,6 +296,8 @@ export const renderShare = async (ctx: Context, next: Next) => {
       signedUrls: 86400, // 24 hours
       teamId: share?.teamId,
       commonMark: true,
+      internalUrlBase: share?.canonicalUrl,
+      applicationUrlBase: share?.team.url,
     });
 
     // Append child documents list if the share includes them

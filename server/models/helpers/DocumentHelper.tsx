@@ -342,6 +342,10 @@ export class DocumentHelper {
        * (default: false)
        */
       commonMark?: boolean;
+      /** Public base URL for document and collection references. */
+      internalUrlBase?: string;
+      /** Base URL for other application-hosted resources. */
+      applicationUrlBase?: string;
     }
   ) {
     let node = DocumentHelper.toProsemirror(document);
@@ -351,6 +355,15 @@ export class DocumentHelper {
         node,
         options.teamId,
         options.signedUrls
+      );
+      node = Node.fromJSON(schema, data);
+    }
+
+    if (options?.internalUrlBase || options?.applicationUrlBase) {
+      const data = ProsemirrorHelper.replaceInternalUrls(
+        node,
+        options.internalUrlBase,
+        options.applicationUrlBase
       );
       node = Node.fromJSON(schema, data);
     }

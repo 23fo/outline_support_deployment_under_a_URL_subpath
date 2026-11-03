@@ -1,6 +1,8 @@
 import { escape } from "es-toolkit/compat";
 import type { Context } from "koa";
 import { addMissingUrlPort } from "@shared/utils/urls";
+import { withBasePath } from "@shared/utils/subpath";
+import env from "@server/env";
 
 /**
  * Performs a redirect on the browser so that the user's auth cookies are
@@ -15,12 +17,12 @@ export function redirectOnClient(
   redirectTo: string,
   method: "GET" | "POST" = "GET"
 ) {
-  const url = addMissingUrlPort(redirectTo);
+  const url = addMissingUrlPort(withBasePath(redirectTo, env.basePath));
   this.type = "text/html";
 
   if (method === "POST") {
     // For POST method, create a form that auto-submits
-    const urlObj = new URL(url);
+    const urlObj = new URL(url, this.request.origin);
     const formAction = `${urlObj.origin}${urlObj.pathname}`;
     const searchParams = urlObj.searchParams;
 

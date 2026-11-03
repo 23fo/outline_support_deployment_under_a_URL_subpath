@@ -500,45 +500,53 @@ export class ProsemirrorHelper extends SharedProsemirrorHelper {
    */
   static replaceInternalUrls(
     doc: Node | ProsemirrorData,
-    basePath: string
+    internalUrlBase?: string,
+    applicationUrlBase?: string
   ): ProsemirrorData {
+    // ProseMirror Node.toJSON() may reuse attributes; copy before modifying.
     const json = "toJSON" in doc ? (doc.toJSON() as ProsemirrorData) : doc;
 
-    if (basePath.endsWith("/")) {
+    if (internalUrlBase?.endsWith("/")) {
       throw new Error("internalUrlBase must not end with a slash");
     }
-
-    function replaceUrl(url: string) {
-      // Only replace if the URL starts with /doc/ (or) /collection/ (not already in a share path)
-      if (url.startsWith("/doc/") || url.startsWith("/collection/")) {
-        return `${basePath}${url}`;
-      }
-      return url;
+    if (applicationUrlBase?.endsWith("/")) {
+      throw new Error("applicationUrlBase must not end with a slash");
     }
 
-    function replaceInternalUrlsInner(node: ProsemirrorData) {
-      // Node.toJSON shares attrs with the node, so replace them rather than mutate.
+    const replaceUrl = (url: string): string => {
+      if (
+        internalUrlBase &&
+        (url.startsWith("/doc/") || url.startsWith("/collection/"))
+      ) {
+        return `${internalUrlBase}${url}`;
+      }
+      if (applicationUrlBase && url.startsWith("/") && !url.startsWith("//")) {
+        return `${applicationUrlBase}${url}`;
+      }
+      return url;
+    };
+
+    const visit = (node: ProsemirrorData): ProsemirrorData => {
       if (typeof node.attrs?.href === "string") {
         node.attrs = { ...node.attrs, href: replaceUrl(node.attrs.href) };
-      } else if (node.marks) {
+      }
+      if (typeof node.attrs?.src === "string") {
+        node.attrs = { ...node.attrs, src: replaceUrl(node.attrs.src) };
+      }
+      if (node.marks) {
         node.marks.forEach((mark) => {
-          if (
-            typeof mark.attrs?.href === "string" &&
-            isInternalUrl(mark.attrs?.href)
-          ) {
+          if (typeof mark.attrs?.href === "string") {
             mark.attrs = { ...mark.attrs, href: replaceUrl(mark.attrs.href) };
           }
         });
       }
-
       if (node.content) {
-        node.content.forEach(replaceInternalUrlsInner);
+        node.content.forEach(visit);
       }
-
       return node;
-    }
+    };
 
-    return replaceInternalUrlsInner(json);
+    return visit(json);
   }
 
   /**
