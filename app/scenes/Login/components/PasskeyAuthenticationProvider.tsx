@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { CSRF } from "@shared/constants";
 import { Client } from "@shared/types";
 import { errToString } from "@shared/utils/error";
+import { withBasePath } from "@shared/utils/subpath";
 import ButtonLarge from "~/components/ButtonLarge";
 import ButtonLink from "~/components/ButtonLink";
 import PluginIcon from "~/components/PluginIcon";
@@ -16,7 +17,7 @@ import { getCSRFToken } from "~/utils/csrf";
 
 type Props = React.ComponentProps<typeof ButtonLarge>;
 
-const verifyAuthenticationPath = "/auth/passkeys.verifyAuthentication";
+const verifyAuthenticationPath = withBasePath("/auth/passkeys.verifyAuthentication");
 
 /**
  * Flattens a nested object into form field entries using bracket notation
@@ -171,7 +172,7 @@ export function PasskeyAuthenticationProvider(props: Props) {
   // Opens the flow in the system browser, which returns to the app via the
   // outline:// deep link like SSO login.
   const openInBrowser = () => {
-    window.location.href = `/auth/passkey?client=${Client.Desktop}`;
+    window.location.href = withBasePath(`/auth/passkey?client=${Client.Desktop}`);
   };
 
   const handleSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {

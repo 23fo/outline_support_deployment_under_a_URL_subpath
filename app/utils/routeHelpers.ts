@@ -1,4 +1,5 @@
 import queryString from "query-string";
+import { withBasePath } from "@shared/utils/subpath";
 import { sharedModelPath as sharedModelPathBase } from "@shared/utils/routeHelpers";
 import type Collection from "~/models/Collection";
 import type Comment from "~/models/Comment";
@@ -314,7 +315,7 @@ export function urlify(
   path: string,
   origin: string = window.location.origin
 ): string {
-  return `${origin}${path}`;
+  return new URL(withBasePath(path), origin).toString();
 }
 
 /**

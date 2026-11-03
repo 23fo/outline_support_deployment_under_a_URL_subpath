@@ -2,6 +2,7 @@ import { parsePath } from "history";
 import { useCallback } from "react";
 import { useHistory } from "react-router-dom";
 import { isModKey } from "@shared/utils/keyboard";
+import { withBasePath, withoutBasePath } from "@shared/utils/subpath";
 import { isDocumentUrl, isInternalUrl } from "@shared/utils/urls";
 import browserHistory, { patchLocation } from "~/utils/history";
 import { sharedModelPath } from "~/utils/routeHelpers";
@@ -63,9 +64,12 @@ export default function useEditorClickHandlers({ shareId }: Params) {
           }
         }
 
+        // Browser history already applies basename when navigating internally.
+        navigateTo = withoutBasePath(navigateTo);
+
         // Link to our own API should be opened in a new tab, not in the app
         if (navigateTo.startsWith("/api/")) {
-          window.open(href, "_blank");
+          window.open(withBasePath(navigateTo), "_blank");
           return;
         }
 
@@ -93,7 +97,7 @@ export default function useEditorClickHandlers({ shareId }: Params) {
 
         // If we're navigating to a share link from a non-share link then open it in a new tab
         if (!shareId && navigateTo.startsWith("/s/")) {
-          window.open(href, "_blank");
+          window.open(withBasePath(navigateTo), "_blank");
           return;
         }
 
@@ -110,7 +114,7 @@ export default function useEditorClickHandlers({ shareId }: Params) {
         ) {
           openRouteInSplit(browserHistory, navigateTo);
         } else {
-          window.open(navigateTo, "_blank");
+          window.open(withBasePath(navigateTo), "_blank");
         }
       } else {
         window.open(href, "_blank");

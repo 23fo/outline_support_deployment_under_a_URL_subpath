@@ -17,6 +17,7 @@ import * as Y from "yjs";
 import { EditorUpdateError } from "@shared/collaboration/CloseEvents";
 import History from "@shared/editor/extensions/History";
 import EDITOR_VERSION from "@shared/editor/version";
+import { collaborationUrl } from "@shared/utils/collaborationUrl";
 import { ProsemirrorDataHelper } from "@shared/utils/ProsemirrorDataHelper";
 import type { Props as EditorProps } from "~/components/Editor";
 import { useDocumentContext } from "~/components/DocumentContext";
@@ -87,7 +88,7 @@ function MultiplayerEditor({ onSynced, ref, ...props }: Props) {
       parameters: {
         editorVersion: EDITOR_VERSION,
       },
-      url: `${env.COLLABORATION_URL}/collaboration`,
+      url: collaborationUrl(env.COLLABORATION_URL),
       name,
       document: ydoc,
       token,
