@@ -2,6 +2,7 @@ import { observer } from "mobx-react";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Redirect } from "react-router-dom";
+import { withBasePath } from "@shared/utils/subpath";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useStores from "~/hooks/useStores";
 import { changeLanguage } from "~/utils/language";
@@ -42,7 +43,7 @@ const Authenticated = ({ children }: Props) => {
 
   useEffect(() => {
     if (auth.logoutRedirectUri) {
-      window.location.href = auth.logoutRedirectUri;
+      window.location.href = withBasePath(auth.logoutRedirectUri);
     }
   }, [auth.logoutRedirectUri]);
 
