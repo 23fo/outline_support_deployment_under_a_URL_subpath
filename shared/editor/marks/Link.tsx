@@ -12,6 +12,8 @@ import type {
 import type { Command, EditorState } from "prosemirror-state";
 import { Plugin, TextSelection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
+import { normalizeResourceUrlForStorage } from "../../utils/resourceUrl";
+import { withBasePath } from "../../utils/subpath";
 import { isUrl, sanitizeUrl } from "../../utils/urls";
 import { getMarkRange } from "../queries/getMarkRange";
 import Mark from "./Mark";
@@ -86,7 +88,8 @@ export default class Link extends Mark<LinkOptions> {
         {
           tag: "a[href]:not(.embed)",
           getAttrs: (dom: HTMLElement) => ({
-            href: dom.getAttribute("href"),
+            href:
+              normalizeResourceUrlForStorage(dom.getAttribute("href")) ?? "",
             title: dom.getAttribute("title"),
           }),
         },
@@ -95,7 +98,11 @@ export default class Link extends Mark<LinkOptions> {
         "a",
         {
           title: node.attrs.title,
-          href: sanitizeUrl(node.attrs.href),
+          href: sanitizeUrl(
+            node.attrs.href.startsWith("/")
+              ? withBasePath(node.attrs.href)
+              : node.attrs.href
+          ),
           class: "use-hover-preview",
           rel: "noopener noreferrer nofollow",
         },

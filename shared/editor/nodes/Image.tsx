@@ -9,6 +9,11 @@ import type {
 import type { Command } from "prosemirror-state";
 import { NodeSelection, Plugin, TextSelection } from "prosemirror-state";
 import * as React from "react";
+import {
+  normalizeResourceUrlForStorage,
+  resolveResourceUrl,
+  sanitizeResourceUrl,
+} from "../../utils/resourceUrl";
 import { sanitizeImageSrc, sanitizeUrl } from "../../utils/urls";
 import Caption from "../components/Caption";
 import ImageComponent, {
@@ -87,9 +92,8 @@ export const downloadImageNode = async (
   cache?: RequestCache
 ) => {
   try {
-    const image = await fetch(node.attrs.src, {
-      cache,
-    });
+    const src = resolveResourceUrl(node.attrs.src) ?? node.attrs.src;
+    const image = await fetch(src, { cache });
     const imageBlob = await image.blob();
     const imageURL = URL.createObjectURL(imageBlob);
     const extension = imageBlob.type.split(/\/|\+/g)[1];
@@ -190,10 +194,12 @@ export default class Image extends SimpleImage {
             // A link wrapping the image is stored as a node attribute rather
             // than a mark, parse it back so it survives copy/paste. Sanitize
             // the href as it is rendered directly into the DOM by the view.
-            const href = sanitizeUrl(img?.closest("a")?.getAttribute("href"));
+            const href = normalizeResourceUrlForStorage(
+              sanitizeUrl(img?.closest("a")?.getAttribute("href"))
+            );
 
             return {
-              src: img?.getAttribute("src"),
+              src: normalizeResourceUrlForStorage(img?.getAttribute("src")),
               alt: img?.getAttribute("alt"),
               title: img?.getAttribute("title"),
               source: img?.getAttribute("source"),
@@ -232,7 +238,7 @@ export default class Image extends SimpleImage {
             }
 
             return {
-              src: dom.getAttribute("src"),
+              src: normalizeResourceUrlForStorage(dom.getAttribute("src")),
               alt: dom.getAttribute("alt"),
               title: dom.getAttribute("title"),
               width: width ? parseInt(width, 10) : undefined,
@@ -273,7 +279,9 @@ export default class Image extends SimpleImage {
         )?.attrs?.href;
         const href = typeof linkHref === "string" ? linkHref : undefined;
 
-        const children = [href ? ["a", { href: sanitizeUrl(href) }, img] : img];
+        const children = [
+          href ? ["a", { href: sanitizeResourceUrl(href) }, img] : img,
+        ];
 
         // Inline icons must use a span wrapper so the browser keeps them inside
         // them inside the containing paragraph; a block `div` (or `p` caption)

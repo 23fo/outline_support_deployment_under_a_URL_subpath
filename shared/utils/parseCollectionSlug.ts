@@ -1,25 +1,27 @@
 import sharedEnv from "../env";
+import { withoutBasePath } from "./subpath";
 
 /**
- * Parse the likely collection identifier from a given url.
+ * parses the likely collection identifier from a given URL.
  *
- * @param url The url to parse.
- * @returns A collection identifier or undefined if not found.
+ * @param url the URL to parse.
+ * @returns a collection identifier or undefined if not found.
  */
 export default function parseCollectionSlug(url: string) {
-  let parsed;
-
-  if (url[0] === "/") {
-    url = `${sharedEnv.URL}${url}`;
-  }
-
+  let pathname;
   try {
-    parsed = new URL(url).pathname;
+    const isApplicationPath = url.startsWith("/") && !url.startsWith("//");
+    const parsed = isApplicationPath
+      ? new URL(url, sharedEnv.URL)
+      : new URL(url);
+    pathname = isApplicationPath
+      ? parsed.pathname
+      : withoutBasePath(parsed.pathname);
   } catch (_err) {
     return;
   }
 
-  const split = parsed.split("/");
+  const split = pathname.split("/");
   const indexOfCollection = split.indexOf("collection");
   return split[indexOfCollection + 1] ?? undefined;
 }
