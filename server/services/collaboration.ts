@@ -7,6 +7,7 @@ import { Throttle } from "@hocuspocus/extension-throttle";
 import { Server } from "@hocuspocus/server";
 import type Koa from "koa";
 import WebSocket from "ws";
+import { collaborationUrl } from "@shared/utils/collaborationUrl";
 import { DocumentValidation } from "@shared/validations";
 import { APIUpdateExtension } from "@server/collaboration/APIUpdateExtension";
 import { ConnectionLimitExtension } from "@server/collaboration/ConnectionLimitExtension";
@@ -28,7 +29,7 @@ export default function init(
   server: http.Server,
   serviceNames: string[]
 ) {
-  const path = "/collaboration";
+  const path = new URL(collaborationUrl(env.COLLABORATION_URL)).pathname;
   const wss = new WebSocket.Server({
     noServer: true,
     maxPayload: DocumentValidation.maxStateLength,
@@ -112,7 +113,7 @@ export default function init(
       }
 
       if (
-        req.url?.startsWith("/realtime") &&
+        req.url?.startsWith(`${env.basePath}/realtime`) &&
         serviceNames.includes("websockets")
       ) {
         // Nothing to do, the websockets service will handle this request

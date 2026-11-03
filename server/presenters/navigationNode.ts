@@ -1,5 +1,6 @@
 import type { Team } from "@server/models";
 import type { NavigationNode } from "@shared/types";
+import { resolveAppUrl } from "@shared/utils/subpath";
 
 export interface PresentedNavigationNode {
   id: string;
@@ -9,11 +10,11 @@ export interface PresentedNavigationNode {
 }
 
 /**
- * Projects a NavigationNode and its descendants to the minimal shape exposed
+ * projects a NavigationNode and its descendants to the minimal shape exposed
  * to API clients, resolving relative `url` fields against the team's base URL.
  *
- * @param team - the team whose base URL anchors relative paths.
- * @param node - the navigation node to present.
+ * @param team the team whose base URL anchors relative paths.
+ * @param node the navigation node to present.
  * @returns the presented node with an absolute URL and recursively presented children.
  */
 export default function presentNavigationNode(
@@ -23,9 +24,7 @@ export default function presentNavigationNode(
   return {
     id: node.id,
     title: node.title,
-    url: /^https?:\/\//.test(node.url)
-      ? node.url
-      : new URL(node.url, team.url).href,
+    url: resolveAppUrl(node.url, team.url),
     children: (node.children ?? []).map((child) =>
       presentNavigationNode(team, child)
     ),
