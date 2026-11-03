@@ -25,7 +25,9 @@ import { loadPublicShare } from "@server/commands/shareLoader";
 
 const readFile = util.promisify(fs.readFile);
 const entry = "app/index.tsx";
-const viteHost = env.URL.replace(`:${env.PORT}`, `:${env.vitePort}`);
+const viteUrl = new URL(env.URL);
+viteUrl.port = String(env.vitePort);
+const viteHost = viteUrl.origin;
 
 let indexHtmlCache: Buffer | undefined;
 
@@ -90,12 +92,13 @@ export const renderApp = async (
     allowIndexing?: boolean;
   } = {}
 ) => {
+  const assetBase = env.CDN_URL || env.basePath;
   const {
     title = env.APP_NAME,
     description = "A modern team knowledge base for your internal documentation, product specs, support answers, meeting notes, onboarding, &amp; more…",
     canonical = "",
     content = "",
-    shortcutIcon = `${env.CDN_URL || ""}/images/favicon-32.png`,
+    shortcutIcon = `${assetBase}/images/favicon-32.png`,
     allowIndexing = false,
   } = options;
 
@@ -121,7 +124,7 @@ export const renderApp = async (
 
   const scriptTags = env.isProduction
     ? `<script type="module" nonce="${ctx.state.cspNonce}" src="${
-        env.CDN_URL || ""
+        assetBase
       }/static/${readManifestFile()[entry]["file"]}"></script>`
     : `<script type="module" nonce="${ctx.state.cspNonce}">
         import RefreshRuntime from "${viteHost}/static/@react-refresh"
@@ -152,34 +155,34 @@ export const renderApp = async (
 
   if (options.isShare) {
     headTags += `
-    <link rel="sitemap" type="application/xml" href="/api/shares.sitemap?id=${escape(options.rootShareId || shareId)}">
+    <link rel="sitemap" type="application/xml" href="${env.basePath}/api/shares.sitemap?id=${escape(options.rootShareId || shareId)}">
     `;
   } else {
     headTags += prefetchTags;
     headTags += `
-    <link rel="manifest" href="/static/manifest.webmanifest" />
+    <link rel="manifest" href="${env.basePath}/static/manifest.webmanifest" />
     <link
       rel="apple-touch-icon"
       type="image/png"
-      href="${env.CDN_URL ?? ""}/images/icon-maskable-192.png"
+      href="${assetBase}/images/icon-maskable-192.png"
       sizes="192x192"
     />
     <link
       rel="apple-touch-icon"
       type="image/png"
-      href="${env.CDN_URL ?? ""}/images/icon-maskable-512.png"
+      href="${assetBase}/images/icon-maskable-512.png"
       sizes="512x512"
     />
     <link
       rel="apple-touch-icon"
       type="image/png"
-      href="${env.CDN_URL ?? ""}/images/icon-maskable-1024.png"
+      href="${assetBase}/images/icon-maskable-1024.png"
       sizes="1024x1024"
     />
     <link
       rel="search"
       type="application/opensearchdescription+xml"
-      href="/opensearch.xml"
+      href="${env.basePath}/opensearch.xml"
       title="Outline"
     />
     `;
@@ -205,7 +208,7 @@ export const renderApp = async (
     .replace(/\{title\}/g, escape(title))
     .replace(/\{description\}/g, escape(description))
     .replace(/\{content\}/g, content)
-    .replace(/\{cdn-url\}/g, env.CDN_URL || "")
+    .replace(/\{asset-base\}/g, assetBase)
     .replace(/\{head-tags\}/g, headTags)
     .replace(/\{slack-app-id\}/g, env.public.SLACK_APP_ID || "")
     .replace(/\{script-tags\}/g, scriptTags)
@@ -275,7 +278,7 @@ export const renderShare = async (ctx: Context, next: Next) => {
     : undefined;
   const markdownUrl =
     markdownPath && markdownPath === ctx.request.path
-      ? `${ctx.request.URL.origin}${markdownPath}.md`
+      ? `${ctx.request.URL.origin}${env.basePath}${markdownPath}.md`
       : undefined;
 
   // If the client explicitly requests markdown and prefers it over HTML,
