@@ -15,7 +15,7 @@ import { getTestServer, setSelfHosted } from "@server/test/support";
 const mockTeamInSessionId = randomUUID();
 
 vi.mock("@server/utils/authentication", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@server/utils/authentication")>()),
+  ...(await importOriginal()),
   getSessionsInCookie() {
     return { [mockTeamInSessionId]: {} };
   },
