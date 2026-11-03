@@ -3,6 +3,8 @@ import { addMonths } from "date-fns";
 import Koa from "koa";
 import bodyParser from "koa-body";
 import Router from "@koa/router";
+import { getCookiePath } from "@shared/utils/subpath";
+import env from "@server/env";
 import { AuthenticationError } from "@server/errors";
 import authMiddleware from "@server/middlewares/authentication";
 import coalesceBody from "@server/middlewares/coaleseBody";
@@ -54,6 +56,7 @@ router.get(
     ctx.cookies.set("accessToken", jwtToken, {
       sameSite: "lax",
       expires,
+      path: getCookiePath(env.basePath),
     });
     const [team, collection, view] = await Promise.all([
       Team.findByPk(user.teamId),

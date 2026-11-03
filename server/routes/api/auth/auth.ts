@@ -1,4 +1,4 @@
-import { subHours, subMinutes } from "date-fns";
+import { subHours } from "date-fns";
 import Router from "@koa/router";
 import { uniqBy } from "es-toolkit/compat";
 import { TeamPreference } from "@shared/types";
@@ -20,7 +20,7 @@ import {
 import ValidateSSOAccessTask from "@server/queues/tasks/ValidateSSOAccessTask";
 import type { APIContext } from "@server/types";
 import { AuthenticationType } from "@server/types";
-import { getSessionsInCookie } from "@server/utils/authentication";
+import { clearAccessTokenCookie, getSessionsInCookie } from "@server/utils/authentication";
 import RateLimiter from "@server/utils/RateLimiter";
 import type * as T from "./schema";
 
@@ -203,10 +203,7 @@ router.post(
 
     void RateLimiter.clearCachedToken(token);
 
-    ctx.cookies.set("accessToken", "", {
-      sameSite: "lax",
-      expires: subMinutes(new Date(), 1),
-    });
+    clearAccessTokenCookie(ctx);
 
     ctx.body = {
       success: true,

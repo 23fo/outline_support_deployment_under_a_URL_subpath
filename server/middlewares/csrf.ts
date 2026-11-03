@@ -12,6 +12,7 @@ import {
   getTokenFromCookie,
 } from "@server/utils/csrf";
 import { CSRF } from "@shared/constants";
+import { getCookiePath, withoutBasePath } from "@shared/utils/subpath";
 import { CSRFError } from "@server/errors";
 import { parseAuthentication } from "./authentication";
 
@@ -32,6 +33,7 @@ export function attachCSRFToken() {
         httpOnly: false,
         sameSite: "lax",
         secure: ctx.request.secure,
+        path: getCookiePath(env.basePath),
       });
     }
 
@@ -59,7 +61,7 @@ export function verifyCSRFToken() {
     }
 
     // For API routes, use AuthenticationHelper to determine if the operation is read-only
-    if (ctx.originalUrl.startsWith("/api/")) {
+    if (withoutBasePath(ctx.originalUrl, env.basePath).startsWith("/api/")) {
       const canAccessWithReadOnly = AuthenticationHelper.canAccess(ctx.path, [
         Scope.Read,
       ]);
