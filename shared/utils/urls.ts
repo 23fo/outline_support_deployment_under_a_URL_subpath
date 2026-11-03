@@ -2,15 +2,21 @@ import { escapeRegExp } from "es-toolkit/compat";
 import env from "../env";
 import { isBrowser } from "./browser";
 import { parseDomain } from "./domains";
+import {
+  getBasePath,
+  isPathInBasePath,
+  withBasePath,
+  withoutBasePath,
+} from "./subpath";
 
 /**
- * Prepends the CDN url to the given path (If a CDN is configured).
+ * prepends the asset base URL to the given path.
  *
- * @param path The path to prepend the CDN url to.
- * @returns The path with the CDN url prepended.
+ * @param path the path to prepend the asset base URL to.
+ * @returns the path with the asset base URL prepended.
  */
 export function cdnPath(path: string): string {
-  return `${env.CDN_URL ?? ""}${path}`;
+  return `${env.CDN_URL || getBasePath()}${path}`;
 }
 
 /**
@@ -29,32 +35,38 @@ export function fileNameFromUrl(url: string) {
 }
 
 /**
- * Returns true if the given string is a link to inside the application.
+ * returns true if the given string is a link to inside the application.
  *
- * @param url The url to check.
- * @returns True if the url is internal, false otherwise.
+ * @param href the URL to check.
+ * @returns true if the URL is internal, false otherwise.
  */
 export function isInternalUrl(href: string) {
-  // empty strings are never internal
   if (href === "") {
     return false;
   }
 
-  // relative paths are always internal
-  if (href[0] === "/") {
+  if (href.startsWith("/") && !href.startsWith("//")) {
     return true;
   }
 
-  const outline = isBrowser
-    ? parseDomain(window.location.href)
-    : parseDomain(env.URL);
-  const domain = parseDomain(href);
+  let parsed;
+  try {
+    parsed = new URL(href, env.URL);
+  } catch (_err) {
+    return false;
+  }
 
-  return (
+  const outline = parseDomain(env.URL);
+  const domain = parseDomain(parsed.href);
+
+  const isApplicationDomain =
     (outline.host === domain.host && outline.port === domain.port) ||
     (isBrowser &&
       window.location.hostname === domain.host &&
-      window.location.port === domain.port)
+      window.location.port === domain.port);
+
+  return (
+    isApplicationDomain && isPathInBasePath(parsed.pathname, getBasePath())
   );
 }
 
@@ -67,9 +79,13 @@ export function isInternalUrl(href: string) {
 export function isDocumentUrl(url: string) {
   try {
     const parsed = new URL(url, env.URL);
+    const pathname =
+      url.startsWith("/") && !url.startsWith("//")
+        ? parsed.pathname
+        : withoutBasePath(parsed.pathname);
     return (
       isInternalUrl(url) &&
-      (parsed.pathname.startsWith("/doc/") || parsed.pathname.startsWith("/d/"))
+      (pathname.startsWith("/doc/") || pathname.startsWith("/d/"))
     );
   } catch (_err) {
     return false;
@@ -85,7 +101,11 @@ export function isDocumentUrl(url: string) {
 export function isCollectionUrl(url: string) {
   try {
     const parsed = new URL(url, env.URL);
-    return isInternalUrl(url) && parsed.pathname.startsWith("/collection/");
+    const pathname =
+      url.startsWith("/") && !url.startsWith("//")
+        ? parsed.pathname
+        : withoutBasePath(parsed.pathname);
+    return isInternalUrl(url) && pathname.startsWith("/collection/");
   } catch (_err) {
     return false;
   }
@@ -127,7 +147,6 @@ export function isUrl(
   try {
     const url = new URL(text);
     const blockedProtocols = ["javascript:", "file:", "vbscript:", "data:"];
-
     if (blockedProtocols.includes(url.protocol)) {
       return false;
     }
@@ -329,7 +348,8 @@ export function sanitizeImageSrc(src: string | null | undefined) {
   if (allowedImageDataUris.some((scheme) => lower.startsWith(scheme))) {
     return src;
   }
-  return sanitizeUrl(src);
+
+  return sanitizeUrl(src.startsWith("/") ? withBasePath(src) : src);
 }
 
 /**
@@ -349,19 +369,19 @@ export function urlRegex(url: string | null | undefined): RegExp | undefined {
 }
 
 /**
- * Parse the share identifier from a given url.
+ * parses the share identifier from a given URL.
  *
- * @param url The url to parse.
- * @returns A share identifier or undefined if not found.
+ * @param url the URL to parse.
+ * @returns a share identifier or undefined if not found.
  */
 export function parseShareIdFromUrl(url: string): string | undefined {
-  if (url[0] === "/") {
-    url = `${env.URL}${url}`;
-  }
-
   let pathname;
   try {
-    pathname = new URL(url).pathname;
+    const isApplicationPath = url.startsWith("/") && !url.startsWith("//");
+    const parsed = isApplicationPath ? new URL(url, env.URL) : new URL(url);
+    pathname = isApplicationPath
+      ? parsed.pathname
+      : withoutBasePath(parsed.pathname);
   } catch (_err) {
     return;
   }
@@ -372,7 +392,6 @@ export function parseShareIdFromUrl(url: string): string | undefined {
   if (indexOfS >= 0) {
     const shareId = split[indexOfS + 1];
     if (shareId) {
-      // Remove trailing format like .md
       const dotIndex = shareId.indexOf(".");
       return dotIndex >= 0 ? shareId.substring(0, dotIndex) : shareId;
     }

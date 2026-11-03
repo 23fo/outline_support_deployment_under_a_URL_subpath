@@ -1,25 +1,27 @@
 import sharedEnv from "../env";
+import { withoutBasePath } from "./subpath";
 
 /**
- * Parse the likely document identifier from a given url.
+ * parses the likely document identifier from a given URL.
  *
- * @param url The url to parse.
- * @returns A document identifier or undefined if not found.
+ * @param url the URL to parse.
+ * @returns a document identifier or undefined if not found.
  */
 export default function parseDocumentSlug(url: string) {
-  let parsed;
-
-  if (url[0] === "/") {
-    url = `${sharedEnv.URL}${url}`;
-  }
-
+  let pathname;
   try {
-    parsed = new URL(url).pathname;
+    const isApplicationPath = url.startsWith("/") && !url.startsWith("//");
+    const parsed = isApplicationPath
+      ? new URL(url, sharedEnv.URL)
+      : new URL(url);
+    pathname = isApplicationPath
+      ? parsed.pathname
+      : withoutBasePath(parsed.pathname);
   } catch (_err) {
     return;
   }
 
-  const split = parsed.split("/");
+  const split = pathname.split("/");
   const indexOfDoc = split.indexOf("doc");
   return split[indexOfDoc + 1] ?? undefined;
 }
