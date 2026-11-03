@@ -14,6 +14,7 @@ import { toError } from "@shared/utils/error";
 import type { CustomTheme } from "@shared/types";
 import Storage from "@shared/utils/Storage";
 import { getCookieDomain, parseDomain } from "@shared/utils/domains";
+import { getCookiePath, withoutBasePath } from "@shared/utils/subpath";
 import type RootStore from "~/stores/RootStore";
 import Team from "~/models/Team";
 import env from "~/env";
@@ -93,7 +94,6 @@ export default class AuthStore extends Store<Team> {
 
     // attempt to load the previous state of this store from localstorage
     const data: PersistedData = Storage.get(this.name) || {};
-
     this.rehydrate(data);
 
     client.setUnauthorizedHandler((reason) =>
@@ -240,17 +240,20 @@ export default class AuthStore extends Store<Team> {
         // Redirect to the correct custom domain or team subdomain if needed
         // Occurs when the (sub)domain is changed in admin and the user hits an old url
         const { hostname, pathname } = window.location;
+        // data.team.url already includes the configured application base path.
+        // Remove it from the current browser path before joining the two values.
+        const relativePath = withoutBasePath(pathname);
 
         if (data.team.domain) {
           if (data.team.domain !== hostname) {
-            window.location.href = `${data.team.url}${pathname}`;
+            window.location.href = `${data.team.url}${relativePath}`;
             return;
           }
         } else if (
           isCloudHosted &&
           parseDomain(hostname).teamSubdomain !== (data.team.subdomain ?? "")
         ) {
-          window.location.href = `${data.team.url}${pathname}`;
+          window.location.href = `${data.team.url}${relativePath}`;
           return;
         }
 
@@ -352,7 +355,9 @@ export default class AuthStore extends Store<Team> {
     // if this logout was forced from an authenticated route then
     // save the current path so we can go back there once signed in
     if (savePath) {
-      setPostLoginPath(window.location.pathname + window.location.search);
+      setPostLoginPath(
+        withoutBasePath(window.location.pathname + window.location.search)
+      );
     }
 
     if (revokeToken) {
@@ -372,6 +377,7 @@ export default class AuthStore extends Store<Team> {
       delete sessions[team.id];
       setCookie("sessions", JSON.stringify(sessions), {
         domain: getCookieDomain(window.location.hostname, isCloudHosted),
+        path: getCookiePath(),
       });
     }
 

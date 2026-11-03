@@ -4,6 +4,7 @@ import queryString from "query-string";
 import EDITOR_VERSION from "@shared/editor/version";
 import type { JSONObject } from "@shared/types";
 import { Scope } from "@shared/types";
+import { withBasePath } from "@shared/utils/subpath";
 import { version } from "../../package.json";
 import env from "~/env";
 import Logger from "./Logger";
@@ -178,7 +179,11 @@ class ApiClient {
     if (path.match(/^http/)) {
       urlToFetch = modifiedPath || path;
     } else {
-      urlToFetch = (options.baseUrl ?? this.baseUrl) + (modifiedPath || path);
+      const baseUrl = withBasePath(
+        options.baseUrl ?? this.baseUrl,
+        env.BASE_PATH
+      );
+      urlToFetch = baseUrl + (modifiedPath || path);
     }
 
     const headerOptions: Record<string, string> = {
@@ -480,7 +485,7 @@ class ApiClient {
    * Sends a request, deduplicating identical in-flight requests so concurrent
    * callers share a single response. Multipart uploads are never deduplicated.
    *
-   * @param path the request path, relative to the base URL or an absolute URL.
+   * @param path the request path.
    * @param method the HTTP method to use.
    * @param data the request payload.
    * @param options additional request options.
