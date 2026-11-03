@@ -5,7 +5,7 @@ import useDragResize from "./hooks/useDragResize";
 import { ResizeLeft, ResizeRight } from "./ResizeHandle";
 import type { ComponentProps } from "../types";
 import { isFirefox } from "../../utils/browser";
-import { sanitizeUrl } from "../../utils/urls";
+import { sanitizeResourceUrl } from "../../utils/resourceUrl";
 import Flex from "../../components/Flex";
 import { s } from "../../styles";
 import { Preview, Subtitle, Title } from "./Widget";
@@ -62,7 +62,7 @@ export default function PdfViewer(props: Props) {
             embedRef.current.src = "";
             requestAnimationFrame(() => {
               if (embedRef.current) {
-                embedRef.current.src = sanitizeUrl(href) ?? "";
+                embedRef.current.src = sanitizeResourceUrl(href) ?? "";
               }
             });
           }
@@ -104,7 +104,7 @@ export default function PdfViewer(props: Props) {
       </Flex>
       <embed
         title={name}
-        src={sanitizeUrl(href)}
+        src={sanitizeResourceUrl(href)}
         ref={embedRef}
         style={{
           width: "100%",

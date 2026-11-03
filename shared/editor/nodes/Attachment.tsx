@@ -10,7 +10,10 @@ import { NodeSelection } from "prosemirror-state";
 import { Trans } from "react-i18next";
 import type { Primitive } from "utility-types";
 import { bytesToHumanReadable, getEventFiles } from "../../utils/files";
-import { sanitizeUrl } from "../../utils/urls";
+import {
+  normalizeResourceUrlForStorage,
+  sanitizeResourceUrl,
+} from "../../utils/resourceUrl";
 import insertFiles from "../commands/insertFiles";
 import toggleWrap from "../commands/toggleWrap";
 import FileExtension from "../components/FileExtension";
@@ -69,7 +72,7 @@ export default class Attachment extends Node {
           getAttrs: (dom: HTMLAnchorElement) => ({
             id: dom.id,
             title: dom.innerText,
-            href: dom.getAttribute("href"),
+            href: normalizeResourceUrlForStorage(dom.getAttribute("href")) ?? "",
             size: parseInt(dom.dataset.size || "0", 10),
           }),
         },
@@ -79,7 +82,7 @@ export default class Attachment extends Node {
         {
           class: `attachment`,
           id: node.attrs.id,
-          href: sanitizeUrl(node.attrs.href),
+          href: sanitizeResourceUrl(node.attrs.href),
           download: node.attrs.title,
           "data-size": node.attrs.size,
         },
@@ -154,7 +157,7 @@ export default class Attachment extends Node {
     ) : (
       <Widget
         icon={<FileExtension title={node.attrs.title} />}
-        href={node.attrs.href}
+        href={sanitizeResourceUrl(node.attrs.href)}
         title={node.attrs.title}
         onMouseDown={this.handleSelect(props)}
         onDoubleClick={() => {
@@ -216,6 +219,7 @@ export default class Attachment extends Node {
             onFileUploadStart,
             onFileUploadStop,
             onNotice,
+            isAttachment: true,
             replaceExisting: true,
             attrs: {
               preview: node.attrs.preview,
@@ -230,7 +234,7 @@ export default class Attachment extends Node {
           return false;
         }
         const { node } = state.selection;
-        const href = sanitizeUrl(node.attrs.href);
+        const href = sanitizeResourceUrl(node.attrs.href);
         if (!href) {
           return false;
         }

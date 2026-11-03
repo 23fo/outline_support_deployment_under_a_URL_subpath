@@ -7,6 +7,7 @@ import {
   getDataTransferImage,
   dataUrlToFile,
 } from "../../utils/files";
+import { resolveResourceUrl } from "../../utils/resourceUrl";
 import { fileNameFromUrl, isInternalUrl } from "../../utils/urls";
 import type { Options } from "../commands/insertFiles";
 import insertFiles from "../commands/insertFiles";
@@ -274,12 +275,12 @@ export class UploadPlugin extends Plugin {
                   // The uploaded image is only measured if the placeholder had
                   // no dimensions, so that the size does not change.
                   dimensions ??= await FileHelper.getImageDimensions(
-                    await FileHelper.getFileForUrl(url)
+                    await FileHelper.getFileForUrl(resolveResourceUrl(url) ?? url)
                   );
                   // Without a local file the image displays from storage, so
                   // it is loaded before it replaces the placeholder.
                   if (!file) {
-                    await FileHelper.loadImage(url);
+                    await FileHelper.loadImage(resolveResourceUrl(url) ?? url);
                   }
 
                   const result = findPlaceholder(view.state, upload.id);

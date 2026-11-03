@@ -10,7 +10,10 @@ import { NodeSelection, TextSelection } from "prosemirror-state";
 import * as React from "react";
 import type { Primitive } from "utility-types";
 import { getEventFiles } from "../../utils/files";
-import { sanitizeUrl } from "../../utils/urls";
+import {
+  normalizeResourceUrlForStorage,
+  sanitizeResourceUrl,
+} from "../../utils/resourceUrl";
 import insertFiles from "../commands/insertFiles";
 import toggleWrap from "../commands/toggleWrap";
 import Caption from "../components/Caption";
@@ -103,7 +106,7 @@ export default class Video extends Node {
           getAttrs: (dom: HTMLVideoElement) => ({
             id: dom.id,
             title: dom.getAttribute("title"),
-            src: dom.getAttribute("src"),
+            src: normalizeResourceUrlForStorage(dom.getAttribute("src")) ?? "",
             width: parseDimension(dom.getAttribute("width")),
             height: parseDimension(dom.getAttribute("height")),
           }),
@@ -118,7 +121,7 @@ export default class Video extends Node {
           "video",
           {
             id: node.attrs.id,
-            src: sanitizeUrl(node.attrs.src),
+            src: sanitizeResourceUrl(node.attrs.src),
             controls: true,
             width: node.attrs.width,
             height: node.attrs.height,
@@ -312,7 +315,7 @@ export default class Video extends Node {
           return false;
         }
         const { node } = state.selection;
-        const src = sanitizeUrl(node.attrs.src);
+        const src = sanitizeResourceUrl(node.attrs.src);
         if (!src) {
           return false;
         }
